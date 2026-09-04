@@ -1,0 +1,28 @@
+{
+  "title": "工作进度怎么说，才能让同事接得住？",
+  "audience": "需要跨人协作的新媒体员工",
+  "objective": "演示一种清晰的进度反馈方法",
+  "type": "tutorial",
+  "platform": "内部培训，也可改为对外知识分享",
+  "aspect_ratio": "9:16",
+  "duration_seconds": 45,
+  "assets": [
+    {"id": "desk", "description": "办公桌前固定机位口播", "status": "to-shoot", "source": "安静办公角落，手机支架"},
+    {"id": "demo", "description": "虚构任务卡，不含真实客户或聊天", "status": "to-create", "source": "用普通文档制作示例任务卡，再录屏"}
+  ],
+  "shots": [
+    {"duration_seconds": 5, "framing": "正面中景", "movement": "固定", "visual": "员工放下手机，面对镜头提出问题", "voiceover": "同事问进度，你只回一句：在做了？", "subtitle": "进度反馈，不只一句“在做了”", "audio": "清晰人声，无背景音乐", "assets": ["desk"]},
+    {"duration_seconds": 7, "framing": "任务卡屏录", "movement": "固定画幅", "visual": "依次出现已完成、卡点、下一步三个字段", "voiceover": "试着讲清三件事：已完成、卡在哪、下一步。", "subtitle": "已完成 · 卡点 · 下一步", "audio": "旁白，切换时轻提示音可选", "assets": ["demo"]},
+    {"duration_seconds": 7, "framing": "任务卡近景", "movement": "固定", "visual": "高亮已完成字段：初稿已写完，等确认配图", "voiceover": "比如，初稿已经写完，现在等确认配图。", "subtitle": "已完成：初稿\n待确认：配图", "audio": "旁白", "assets": ["demo"]},
+    {"duration_seconds": 8, "framing": "任务卡近景", "movement": "固定", "visual": "高亮下一步字段：收到反馈后调整，并约定交付时间", "voiceover": "再说下一步：收到反馈后调整，并约好交付时间。", "subtitle": "下一步：调整内容，约定交付时间", "audio": "旁白", "assets": ["demo"]},
+    {"duration_seconds": 6, "framing": "正面中景", "movement": "固定", "visual": "员工拿起写有需要协助的小卡片", "voiceover": "需要协助时，说清希望谁帮你做什么。", "subtitle": "协助请求：谁，做什么", "audio": "清晰人声", "assets": ["desk"]},
+    {"duration_seconds": 7, "framing": "任务卡全屏", "movement": "固定", "visual": "完整示例卡停留，依次标出三项信息，留出阅读时间", "voiceover": "不用写长篇，关键是让对方知道怎么接着往下做。", "subtitle": "让对方知道，下一步怎么接", "audio": "旁白结束后留停顿", "assets": ["demo"]},
+    {"duration_seconds": 5, "framing": "正面中景", "movement": "固定", "visual": "员工看向镜头，示意屏幕上的三项清单", "voiceover": "下次汇报进度，用这三项试一次。", "subtitle": "下次反馈，试试这三项", "audio": "清晰人声，结尾自然收声", "assets": ["desk"]}
+  ],
+  "production_notes": [
+    "单人手机拍摄假设；先集中录镜头 1、5、7，再做任务卡屏录。",
+    "这是自制教学示例，不使用真实员工聊天截图，不代表客户项目。",
+    "实际试读后微调停顿；SRT 是粗剪屏幕文案，不是逐字转录。",
+    "员工出镜前确认使用范围，避免把办公区其他人的屏幕拍进去。"
+  ]
+}

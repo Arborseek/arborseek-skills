@@ -1,0 +1,5 @@
+interface:
+  display_name: "短视频脚本与分镜助手"
+  short_description: "面向员工新媒体工作，分类编写口播、分镜、拍摄清单与剪辑交接稿。"
+  icon_large: "./assets/storyboard-icon.svg"
+  default_prompt: "使用 $short-video-storyboard，根据我的工作选题和现有资源写一条可拍摄的短视频脚本，附分镜与素材清单。"
