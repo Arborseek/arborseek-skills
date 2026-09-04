@@ -27,6 +27,7 @@
   paper-workspace.json      身份、阅读范围、结论和原图索引
   reading.md                助手保存的阅读笔记
   figures/                  解析时实际使用过的原图
+  project-assets/           按需归档的项目网站图片、视频与补充 PDF
   article.json              写作后产生的文章包
   article.html + assets/    写作后产生的网页和图片
 ```
@@ -38,6 +39,8 @@
 `schema_version` 为 `paper-workspace/1`；`paper` 保留 title、version、source_url、local_pdf、sha256、read_scope。`claims` 沿用公众号交接的 id、claim、status、locator、notes。`figures` 保存实际文件路径、文件哈希、PDF 哈希/版本、PDF 页序、图号、图注、裁剪范围、是否已查看、署名与使用依据。
 
 原图索引只收论文原图；生成图和重绘只加入后续 article.json，不能回写成论文原始资料。reading.md 和 figures/ 不只是聊天附件或临时预览，整篇解析/串联交付时必须留在可复用目录。明确只要不保存的短问答时尊重用户要求，并说明没有形成可复用素材包。
+
+project_assets 是可选数组，旧资料目录仍兼容。解析与公众号各自携带 project_assets.py；相关网站媒体保存后可以继续复用，受限材料记录 link-only/failed 和原因。必须核对项目归属，保存取得时间与来源，不能以绑定某个 paper_version 推断网站素材与该版论文一致。公众号按需选图，不自动将全部网站资料插入文章；视频截图保留父视频哈希和时间戳。
 
 路径相对资料目录；文件夹整体移动后仍能校验。不要只搬 JSON；跨设备需把 PDF、图片和笔记一并移走。来源版本或图片哈希变化时停止复用，恢复对应文件或新建另一个版本目录，不能继续用旧图配新论文。
 

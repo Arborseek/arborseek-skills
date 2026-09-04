@@ -1,4 +1,5 @@
 import copy
+import base64
 import json
 import subprocess
 import sys
@@ -39,6 +40,43 @@ class PaperBridgeTests(unittest.TestCase):
 
     def run_cli(self, *args):
         return subprocess.run([sys.executable, str(ROOT / "scripts/paper_article.py"), *map(str, args)], cwd=self.base, capture_output=True, text=True)
+
+    def project_handoff(self):
+        import paper_workspace
+        import project_assets
+        pdf = self.base / "paper.pdf"
+        pdf.write_bytes(b"%PDF-1.4\nproject integration fixture")
+        root = self.base / "workspace"
+        paper_workspace.init_workspace(pdf, root, title="Project test paper")
+        png = self.base / "site.png"
+        png.write_bytes(base64.b64decode("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+jVZkAAAAASUVORK5CYII="))
+        project_assets.archive(root, "site-image", "https://example.org/demo.png", "https://example.org/project", "Demo image", "Fixture project relation", mode="import", kind="image", basis="Self-made fixture", local=png)
+        return paper_workspace.load(root)[0], root
+
+    def test_project_assets_are_retained_but_not_automatically_inserted(self):
+        handoff, root = self.project_handoff()
+        package = bridge.prepare(handoff, self.draft, "测试", root)
+        self.assertEqual(len(package["project_assets"]), 1)
+        self.assertEqual(package["visuals"]["items"], [])
+
+    def test_selected_project_image_has_source_label_and_final_gate(self):
+        handoff, root = self.project_handoff()
+        package = bridge.prepare(handoff, self.draft, "测试", root, [("site-image", "论文图未包含网站演示场景")])
+        self.assertTrue(bridge.check(package, root)["valid"])
+        image = package["visuals"]["items"][0]
+        self.assertIn("项目网站素材，非论文原图", image["caption"])
+        self.assertIn("https://example.org/project", image["caption"])
+        self.assertFalse(image["paper_figure"]["use_as_evidence"])
+        self.assertFalse(bridge.check(self.approve(package), root, True)["valid"])
+
+    def test_project_image_cannot_be_relabelled_or_silently_changed(self):
+        handoff, root = self.project_handoff()
+        package = bridge.prepare(handoff, self.draft, "测试", root, [("site-image", "补充网站演示")])
+        package["visuals"]["items"][0]["paper_figure"]["kind"] = "original"
+        self.assertFalse(bridge.check(package, root)["valid"])
+        package["visuals"]["items"][0]["paper_figure"]["kind"] = "project"
+        (root / "project-assets/site-image.png").write_bytes(b"changed")
+        self.assertFalse(bridge.check(package, root)["valid"])
 
     def test_preserves_identity_locator_and_does_not_auto_approve(self):
         data = self.package()

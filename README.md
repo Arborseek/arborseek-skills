@@ -16,13 +16,15 @@
 | [论文解读公众号写作](skills/paper-wechat-article/SKILL.md) | 承接解析笔记，优先论文原图，不足时补示意图，输出有证据的公众号文章 | `paper-wechat-article` |
 | [科技风网站与落地页设计](skills/build-bright-tech-landing-page/SKILL.md) | 明亮科技风网站、响应式落地页、配图与交互设计规范 | `build-bright-tech-landing-page` |
 
-合集版本：**1.6.0**。检索/下载/解析 **1.3.0**，论文公众号 **1.1.0**，小红书 **3.2.1**，通用公众号 **1.1.2**，网站 **1.1.0**；技能独立版本以各自 `SKILL.md` 为准，目录与打包入口由 [catalog.json](catalog.json) 管理。保留既有 Slug，避免打断调用和交接。
+合集版本：**1.7.0**。检索/下载 **1.3.1**，解析 **1.4.0**，论文公众号 **1.2.0**，小红书 **3.2.1**，通用公众号 **1.1.2**，网站 **1.1.0**；技能独立版本以各自 `SKILL.md` 为准，目录与打包入口由 [catalog.json](catalog.json) 管理。保留既有 Slug，避免打断调用和交接。
 
 论文工作流现在可衔接为：检索 → 下载 → 精读解析 → 论文解读公众号写作。新技能独立携带公众号排版引擎；原通用公众号技能不变。先用同版本论文原图，无合适原图时才补充标明来源的重绘/AI 概念图，不合成实验证据。
 
 四个论文技能也都可独立使用：给主题只检索，给 ID 只下载，给 PDF 直接解析或写公众号。整篇解析用过的原图会保存到论文资料目录的 figures/ 并登记版本、页码、图注和哈希；写作优先复用，不重复抓取。详见 [四技能契约](skills/tianshu-tanjie-paper-reading/references/pipeline-contract.md) 与 [原图保存工具](skills/tianshu-tanjie-paper-reading/references/figure-storage.md)。跨设备请整体移动资料目录，不只复制索引。
 
 只需要论文流程时，打包命令还会生成中文名“论文四技能-通用”和“论文四技能-WorkBuddy”两个合集，后者解压后分别上传四个内层 ZIP。使用与实测范围见 [四技能使用说明](docs/paper-workflow.md)。
+
+新增 [项目网站资料归档](skills/tianshu-tanjie-paper-reading/references/project-assets.md)：核对论文项目网站后，按需保存公开可下载的图片、MP4/WebM 视频和补充 PDF 到 project-assets/，记录来源、时间、哈希和使用状态；无法下载的保留链接与原因。解析和论文公众号各自带完整工具，不默认抓取整站、不绕过登录或播放保护。网站素材不冒充论文原图，网站版本关联默认待核验。
 
 网站技能 1.1.0 新增中文任务入口、可覆盖的视觉建议、[独立 HTML 示例](skills/build-bright-tech-landing-page/examples/landing-page.html)、只读静态检查器与浏览器回归入口。参考 [示例说明](skills/build-bright-tech-landing-page/references/examples.md)，不要将示例作为固定整页模板。
 

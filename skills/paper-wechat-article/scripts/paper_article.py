@@ -6,6 +6,7 @@ import copy
 import json
 import os
 import re
+import math
 import subprocess
 import sys
 from pathlib import Path
@@ -15,7 +16,7 @@ from bs4 import BeautifulSoup
 from article_package import package_template, validate_package
 from paper_workspace import SCHEMA as WORKSPACE_SCHEMA, sha256, validate as validate_workspace
 
-LABELS = {"original": "论文原图", "redraw": "依据原文重绘示意", "generated": "AI 生成概念配图，非论文原图"}
+LABELS = {"original": "论文原图", "redraw": "依据原文重绘示意", "generated": "AI 生成概念配图，非论文原图", "project": "项目网站素材，非论文原图"}
 SCOPES = {"full-text", "partial", "abstract", "notes-only"}
 
 
@@ -39,7 +40,7 @@ def paper_errors(paper):
     return errors
 
 
-def prepare(handoff, draft, title, base):
+def prepare(handoff, draft, title, base, project_images=None):
     if not isinstance(handoff, dict):
         raise ValueError("handoff must be an object")
     if handoff.get("schema_version") == WORKSPACE_SCHEMA:
@@ -59,9 +60,24 @@ def prepare(handoff, draft, title, base):
     data["research"]["sources"] = [{"url": paper["source_url"], "title": paper["title"],
                                     "publisher": credit or "论文原文"}]
     claims = handoff.get("claims", [])
-    figures = handoff.get("figures", [])
+    figures = copy.deepcopy(handoff.get("figures", []))
     if not isinstance(claims, list) or not isinstance(figures, list):
         raise ValueError("claims and figures must be arrays")
+    data["project_assets"] = copy.deepcopy(handoff.get("project_assets", []))
+    if not isinstance(data["project_assets"], list):
+        raise ValueError("project_assets must be an array")
+    for asset in data["project_assets"]:
+        if asset.get("local_path"):
+            asset["local_path"] = str((base / asset["local_path"]).resolve())
+    for ident, reason in project_images or []:
+        asset = next((a for a in data["project_assets"] if a.get("id") == ident), None)
+        if not asset or asset.get("status") != "saved" or asset.get("media_type") != "image" or not reason.strip():
+            raise ValueError("Selected project image must be saved; provide why it complements available paper figures")
+        frame = asset.get("origin") == "video-frame"
+        locator = asset["source_page_url"] + ("，视频 %.3f 秒" % asset["timestamp_seconds"] if frame else "")
+        figures.append(dict(asset, id="project-" + ident, kind="project", label="项目演示视频截图" if frame else "项目网站图片",
+                            locator=locator, caption=asset["title"], use_as_evidence=False, fallback_reason=reason,
+                            project_asset_id=ident))
     for claim in claims:
         if not isinstance(claim, dict):
             raise ValueError("each claim must be an object")
@@ -80,10 +96,10 @@ def prepare(handoff, draft, title, base):
         resolved = str((base / local).resolve()) if local else ""
         caption = " · ".join(str(figure.get(key) or "") for key in ("caption", "label", "locator", "credit"))
         item = {"id": figure.get("id"), "role": "section", "placement": "after-intro",
-                "source_type": {"original": "provided", "redraw": "diagram", "generated": "generated"}[kind],
+                "source_type": {"original": "provided", "redraw": "diagram", "generated": "generated", "project": "provided"}[kind],
                 "status": "candidate", "alt": figure.get("alt", ""),
-                "caption": LABELS[kind] + " · " + caption + " · " + paper["source_url"],
-                "local_path": resolved, "source_page_url": paper["source_url"],
+                "caption": LABELS[kind] + " · " + caption + " · " + (figure["source_page_url"] if kind == "project" else paper["source_url"]),
+                "local_path": resolved, "source_page_url": figure["source_page_url"] if kind == "project" else paper["source_url"],
                 "credit": figure.get("credit", ""), "license": figure.get("rights_note", ""),
                 "paper_figure": copy.deepcopy(figure)}
         if kind == "generated":
@@ -117,6 +133,28 @@ def check(data, base, ready=False):
         pdf = (base / pdf_path).resolve() if isinstance(pdf_path, str) and pdf_path else None
         if not pdf or not pdf.is_file() or sha256(pdf) != paper["sha256"]:
             errors.append("Paper PDF is missing or changed; restore matching source before continuing")
+    project_assets = data.get("project_assets", [])
+    if not isinstance(project_assets, list):
+        errors.append("project_assets must be an array")
+        project_assets = []
+    for asset in project_assets:
+        if not isinstance(asset, dict):
+            errors.append("Invalid project asset record")
+            continue
+        if asset.get("paper_sha256") != paper.get("sha256") or asset.get("paper_version") != paper.get("version"):
+            errors.append("Project asset is bound to another paper record")
+        if asset.get("status") == "saved":
+            path = asset.get("local_path")
+            path = (base / path).resolve() if isinstance(path, str) and path else None
+            if not path or not path.is_file() or sha256(path) != asset.get("sha256"):
+                errors.append("Archived project material is missing or changed")
+        if asset.get("parent_id"):
+            parent = next((p for p in project_assets if isinstance(p, dict) and p.get("id") == asset["parent_id"]), None)
+            if not parent or parent.get("media_type") != "video" or parent.get("sha256") != asset.get("parent_sha256"):
+                errors.append("Project video frame has no matching parent video")
+            timestamp = asset.get("timestamp_seconds")
+            if not isinstance(timestamp, (int, float)) or not math.isfinite(timestamp) or timestamp < 0:
+                errors.append("Project video frame timestamp is invalid")
     article = data.get("article", {})
     if not isinstance(article, dict):
         article = {}
@@ -152,14 +190,22 @@ def check(data, base, ready=False):
         if kind not in LABELS:
             errors.append(prefix + "missing paper_figure.kind")
             continue
-        if kind == "original" and figure.get("paper_sha256"):
+        if figure.get("project_asset_id") and kind != "project":
+            errors.append(prefix + "archived website material must not be relabeled as a paper original")
+        if kind in ("original", "project") and figure.get("paper_sha256"):
             if figure["paper_sha256"] != paper.get("sha256") or figure.get("paper_version") != paper.get("version"):
                 errors.append(prefix + "figure provenance disagrees with this paper/version")
             asset_path = item.get("local_path")
             asset = (base / asset_path).resolve() if isinstance(asset_path, str) and asset_path else None
             if not asset or not asset.is_file() or sha256(asset) != figure.get("sha256"):
                 errors.append(prefix + "saved original figure missing or modified; do not silently regenerate")
-        expected = {"original": "provided", "redraw": "diagram", "generated": "generated"}[kind]
+        if kind == "project":
+            source = next((a for a in project_assets if isinstance(a, dict) and a.get("id") == figure.get("project_asset_id")), None)
+            if not source or source.get("media_type") != "image" or source.get("sha256") != figure.get("sha256"):
+                errors.append(prefix + "project image has no matching archived source")
+            elif source.get("source_page_url") != item.get("source_page_url") or source["source_page_url"] not in str(item.get("caption", "")):
+                errors.append(prefix + "project source page must remain in the visible caption")
+        expected = {"original": "provided", "redraw": "diagram", "generated": "generated", "project": "provided"}[kind]
         if item.get("source_type") != expected:
             errors.append(prefix + "source_type disagrees with paper_figure.kind")
         if figure.get("rights_status") not in {"cleared", "unknown"}:
@@ -204,6 +250,7 @@ def main():
     prep.add_argument("draft", type=Path)
     prep.add_argument("output", type=Path)
     prep.add_argument("--title", required=True)
+    prep.add_argument("--project-image", nargs=2, action="append", metavar=("ASSET_ID", "REASON"), help="Explicitly reuse a saved project image with a reason; never converts videos to images")
     for command in ("check", "render"):
         sub = subs.add_parser(command)
         sub.add_argument("package", type=Path)
@@ -219,9 +266,9 @@ def main():
             raise FileExistsError("Output already exists; choose a new path: " + str(args.output))
         if args.command == "prepare":
             data = prepare(json.loads(args.handoff.read_text(encoding="utf-8")),
-                           args.draft.read_text(encoding="utf-8"), args.title, args.handoff.parent)
+                           args.draft.read_text(encoding="utf-8"), args.title, args.handoff.parent, args.project_image)
             # Keep the article package portable when the complete workspace moves.
-            for container, key in [(data["paper"], "local_pdf")] + [(item, "local_path") for item in data["visuals"]["items"]]:
+            for container, key in [(data["paper"], "local_pdf")] + [(item, "local_path") for item in data["visuals"]["items"] + data["project_assets"]]:
                 if container.get(key):
                     container[key] = os.path.relpath(container[key], args.output.parent.resolve()).replace(os.sep, "/")
             report = check(data, args.output.parent)

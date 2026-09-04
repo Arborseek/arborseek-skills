@@ -75,6 +75,33 @@ def validate(data, root):
     if data.get("notes_path"):
         if not inside(root, data["notes_path"]).is_file():
             raise ValueError("Reading notes path does not exist")
+    assets = data.get("project_assets", [])
+    if not isinstance(assets, list):
+        raise ValueError("project_assets must be an array")
+    asset_ids = set()
+    for item in assets:
+        if not isinstance(item, dict) or not re.fullmatch(r"[a-z0-9][a-z0-9-]{0,63}", str(item.get("id", ""))) or item["id"] in asset_ids:
+            raise ValueError("Invalid or duplicate project asset ID")
+        asset_ids.add(item["id"])
+        if item.get("paper_sha256") != paper["sha256"] or item.get("paper_version") != paper["version"]:
+            raise ValueError("Project asset is associated with a different paper record")
+        if item.get("status") not in ("saved", "link-only", "failed"):
+            raise ValueError("Invalid project asset status")
+        if item["status"] == "saved":
+            path = inside(root, item.get("local_path"))
+            if not path.is_file() or sha256(path) != item.get("sha256"):
+                raise ValueError("Project asset missing or changed: " + item["id"])
+        elif item.get("local_path"):
+            raise ValueError("Unsaved project asset cannot claim a local file")
+        if item.get("parent_id"):
+            parent = next((p for p in assets if isinstance(p, dict) and p.get("id") == item["parent_id"]), None)
+            if not parent or parent.get("status") != "saved" or parent.get("media_type") != "video" or parent.get("sha256") != item.get("parent_sha256"):
+                raise ValueError("Video frame parent is missing or changed")
+            timestamp = item.get("timestamp_seconds")
+            if item.get("media_type") != "image" or item.get("source_url") != parent.get("source_url") or not isinstance(timestamp, (int, float)) or not math.isfinite(timestamp) or timestamp < 0:
+                raise ValueError("Video frame source or timestamp is invalid")
+        elif item.get("origin") == "video-frame":
+            raise ValueError("Video frame must preserve its parent video")
     return data
 
 

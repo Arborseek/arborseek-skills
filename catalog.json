@@ -1,5 +1,5 @@
 {
-  "bundle_version": "1.6.0",
+  "bundle_version": "1.7.0",
   "skills": [
     {"name": "tianshu-tanjie-paper-search", "display_name": "arXiv 论文检索与筛选", "category": "research", "tests": "scripts"},
     {"name": "tianshu-tanjie-arxiv", "display_name": "arXiv 论文下载", "category": "research", "tests": "scripts"},

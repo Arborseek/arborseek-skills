@@ -62,18 +62,21 @@ class PipelineTests(unittest.TestCase):
             image.write_bytes(base64.b64decode("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+jVZkAAAAASUVORK5CYII="))
             result = run(reader / "scripts/paper_workspace.py", "import-figure", ws, "--image", image, "--id", "fig-1", "--page", 1, "--label", "Fig. 1", "--caption", "Synthetic test figure")
             self.assertEqual(result.returncode, 0, result.stdout)
+            result = run(reader / "scripts/project_assets.py", "import", ws, "--id", "site-image", "--url", "https://example.org/demo.png", "--page", "https://example.org/project", "--title", "Project fixture image", "--relation-note", "Synthetic project relation", "--kind", "image", "--basis", "Self-made fixture", "--file", image)
+            self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
             manifest = ws / "paper-workspace.json"
             data = json.loads(manifest.read_text())
             data["paper"]["read_scope"] = "partial"
             data["claims"] = [{"id": "c1", "claim": "Synthetic contract claim only", "status": "verified", "locator": "PDF page 1", "notes": "fixture only"}]
             data["figures"][0].update(checked=True, credit="Test author", alt="Test figure", rights_status="cleared", rights_note="Self-made test fixture")
+            data["project_assets"][0].update(checked=True, credit="Test author", alt="Project test figure", rights_status="cleared", rights_note="Self-made test fixture")
             manifest.write_text(json.dumps(data))
             moved = base / "迁移后资料"
             shutil.move(ws, moved)
             draft = moved / "draft.html"
             draft.write_text("<h2>测试问题</h2><p>这是用于验证交接的合成正文，不是真实科学结论。正文只检查结构与素材复用。</p><h2>范围</h2><p>仅部分阅读的状态必须保留，不因转为公众号文章而变成全文精读。</p>", encoding="utf-8")
             article = moved / "article.json"
-            result = run(writer / "scripts/paper_article.py", "prepare", moved / "paper-workspace.json", draft, article, "--title", "合成交接测试")
+            result = run(writer / "scripts/paper_article.py", "prepare", moved / "paper-workspace.json", draft, article, "--title", "合成交接测试", "--project-image", "site-image", "补充原图未覆盖的项目演示")
             self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
             package = json.loads(article.read_text())
             self.assertEqual(package["paper"]["version"], selected[0])
@@ -82,13 +85,15 @@ class PipelineTests(unittest.TestCase):
             # The article cannot be final merely because upstream extracted a file.
             self.assertNotEqual(run(writer / "scripts/paper_article.py", "check", article, "--require-ready").returncode, 0)
             package["qa"].update(content_reviewed=True, sources_reviewed=True, visuals_reviewed=True)
-            package["visuals"]["items"][0]["status"] = "ready"
+            for item in package["visuals"]["items"]:
+                item["status"] = "ready"
             article.write_text(json.dumps(package))
             output = moved / "preview.html"
             result = run(writer / "scripts/paper_article.py", "render", article, output, "--require-ready")
             self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
-            self.assertEqual(len(list((moved / "assets").iterdir())), 1)
+            self.assertEqual(len(list((moved / "assets").iterdir())), 2)
             self.assertIn("Fig. 1", output.read_text())
+            self.assertIn("项目网站素材，非论文原图", output.read_text())
             result = run(writer / "scripts/lint_article_output.py", output)
             self.assertEqual(result.returncode, 0, result.stdout)
             # A second move keeps both the upstream manifest and article usable.

@@ -40,7 +40,7 @@ def validate():
         raise ValueError('Duplicate catalog entry')
     reader = ROOT / 'skills/tianshu-tanjie-paper-reading'
     writer = ROOT / 'skills/paper-wechat-article'
-    for relative in ('scripts/paper_workspace.py', 'tests/test_workspace.py'):
+    for relative in ('scripts/paper_workspace.py', 'tests/test_workspace.py', 'scripts/project_assets.py', 'tests/test_project_assets.py'):
         if (reader / relative).read_bytes() != (writer / relative).read_bytes():
             raise ValueError('Standalone workspace copies diverged: ' + relative)
     actual = {p.name for p in (ROOT / 'skills').iterdir() if p.is_dir()}
