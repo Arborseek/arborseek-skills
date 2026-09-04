@@ -1,0 +1,4 @@
+interface:
+  display_name: "arXiv 论文下载"
+  short_description: "获取选定版本的论文文件，核验内容、复用缓存并为解析保留出处"
+  default_prompt: "使用 $tianshu-tanjie-arxiv 下载我选定的论文，核对版本并列出文件与元数据位置。"

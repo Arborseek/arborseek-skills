@@ -1,0 +1,4 @@
+interface:
+  display_name: "arXiv 论文检索与筛选"
+  short_description: "按研究主题和日期发现候选论文，依据摘要筛选并衔接下载与解析"
+  default_prompt: "使用 $tianshu-tanjie-paper-search 查找这个主题的论文，说明相关性、版本与检索范围，先不下载。"

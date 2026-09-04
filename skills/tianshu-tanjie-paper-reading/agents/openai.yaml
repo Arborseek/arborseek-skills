@@ -1,0 +1,4 @@
+interface:
+  display_name: "论文精读与解析"
+  short_description: "围绕研究问题解释论文机制、核对结果，形成有出处的判断与行动"
+  default_prompt: "使用 $tianshu-tanjie-paper-reading 解答我对这篇论文的问题，并区分原文依据、分析判断与待验证事项。"
