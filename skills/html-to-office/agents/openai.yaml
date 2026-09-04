@@ -1,0 +1,5 @@
+interface:
+  display_name: "HTML 转 Word 与 PDF"
+  short_description: "将 HTML 转成可编辑 Word 和文档版 PDF，核对中文、图片、表格与链接。"
+  icon_large: "./assets/convert-icon.svg"
+  default_prompt: "使用 $html-to-office，把我提供的 HTML 转成 Word 和 PDF，保留正文、图片、表格和可点击链接，转换问题单独报告。"

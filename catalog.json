@@ -1,5 +1,5 @@
 {
-  "bundle_version": "1.11.0",
+  "bundle_version": "1.12.0",
   "skills": [
     {"name": "tianshu-tanjie-paper-search", "display_name": "arXiv 论文检索与筛选", "category": "research", "tests": "scripts"},
     {"name": "tianshu-tanjie-arxiv", "display_name": "arXiv 论文下载", "category": "research", "tests": "scripts"},
@@ -9,6 +9,7 @@
     {"name": "paper-wechat-article", "display_name": "论文解读公众号写作", "category": "writing", "tests": "tests"},
     {"name": "build-bright-tech-landing-page", "display_name": "科技风网站与落地页设计", "category": "development", "tests": "tests"},
     {"name": "short-video-storyboard", "display_name": "短视频脚本与分镜助手", "category": "writing", "tests": "tests"},
-    {"name": "screen-recording-to-guide", "display_name": "录屏转操作教程", "category": "productivity", "tests": "tests"}
+    {"name": "screen-recording-to-guide", "display_name": "录屏转操作教程", "category": "productivity", "tests": "tests"},
+    {"name": "html-to-office", "display_name": "HTML 转 Word 与 PDF", "category": "productivity", "tests": "tests"}
   ]
 }
