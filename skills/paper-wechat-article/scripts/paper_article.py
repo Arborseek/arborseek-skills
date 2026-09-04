@@ -54,7 +54,7 @@ def source_footer(data, items):
         figure = item.get("paper_figure", {})
         url = item.get("source_page_url") or paper["source_url"]
         entry = records.setdefault(url, {"title": "项目网站", "credits": [], "figures": []})
-        for key, value in (("credits", item.get("credit", "")), ("figures", figure.get("label", ""))):
+        for key, value in (("credits", item.get("credit", "")), ("figures", item.get("article_label", figure.get("label", "")))):
             if value and value not in entry[key]:
                 entry[key].append(value)
         # License-specific attribution remains visible even when generic metadata moves.

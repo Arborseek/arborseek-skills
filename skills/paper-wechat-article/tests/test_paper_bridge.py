@@ -205,10 +205,10 @@ class PaperBridgeTests(unittest.TestCase):
         result = self.run_cli("render", package, target, "--require-ready")
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
         output = target.read_text(encoding="utf-8")
-        self.assertIn("Fig. 1", output)
+        self.assertIn("图 1", output)
         from bs4 import BeautifulSoup
         soup = BeautifulSoup(output, "html.parser")
-        self.assertEqual(soup.figcaption.get_text(), "Fig. 1｜合成测试图片")
+        self.assertEqual(soup.figcaption.get_text(), "图 1｜合成测试图片")
         self.assertIn("测试作者", soup.select_one(".paper-references").get_text())
         self.assertNotIn("PDF 第", output)
         self.assertNotIn("草稿素材", output)

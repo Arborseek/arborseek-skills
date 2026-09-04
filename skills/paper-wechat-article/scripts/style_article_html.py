@@ -399,6 +399,7 @@ def sanitize(fragment: str, title: str, source_dir: Path, output_dir: Path) -> t
             parent.unwrap()
 
     allowed = {
+        "span": {"data-figure-ref"},
         "a": {"href", "title"}, "img": {"src", "data-src", "alt", "title", "width", "height"},
         "video": {"src", "poster", "controls"}, "source": {"src", "type"},
         "td": {"colspan", "rowspan"}, "th": {"colspan", "rowspan"},

@@ -92,7 +92,7 @@ class PipelineTests(unittest.TestCase):
             result = run(writer / "scripts/paper_article.py", "render", article, output, "--require-ready")
             self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
             self.assertEqual(len(list((moved / "assets").iterdir())), 2)
-            self.assertIn("Fig. 1", output.read_text())
+            self.assertIn("图 1", output.read_text())
             self.assertIn("项目网站素材，非论文原图", output.read_text())
             result = run(writer / "scripts/lint_article_output.py", output)
             self.assertEqual(result.returncode, 0, result.stdout)

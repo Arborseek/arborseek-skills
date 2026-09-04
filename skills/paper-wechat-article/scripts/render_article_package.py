@@ -34,6 +34,7 @@ def insert_visuals(fragment: str, items: list[dict], package_dir: Path, output_d
     soup = BeautifulSoup(fragment, "html.parser")
     cover_url = ""
     inserted = []
+    intro_tail = None
     for item in items:
         candidate = include_candidates and item.get("status") == "candidate"
         if item.get("status") != "ready" and not candidate:
@@ -56,8 +57,9 @@ def insert_visuals(fragment: str, items: list[dict], package_dir: Path, output_d
         if item.get("role") == "cover" or placement == "cover":
             soup.insert(0, figure)
         elif placement == "after-intro":
-            anchor = soup.find("p")
+            anchor = intro_tail if intro_tail is not None else soup.find("p")
             anchor.insert_after(figure) if anchor else soup.append(figure)
+            intro_tail = figure
         elif placement.startswith("before-section:"):
             try:
                 section_number = max(1, int(placement.split(":", 1)[1]))
@@ -121,8 +123,15 @@ def main() -> None:
             img["style"] = f"display:block;width:{width}px;max-width:100%;height:auto;margin:16px auto;"
         fragment = str(formula_soup)
     fragment, cover_url, inserted = insert_visuals(fragment, data.get("visuals", {}).get("items", []), args.package.parent, args.output.parent, args.include_candidates)
+    figure_numbers = {}
     if "paper" in data:
-        used = [item for item in data.get("visuals", {}).get("items", []) if str(item.get("id")) in inserted]
+        from figure_numbering import number_figures
+        try:
+            fragment, figure_numbers = number_figures(fragment, data.get("visuals", {}).get("items", []))
+        except ValueError as exc:
+            print(json.dumps({"valid": False, "errors": [str(exc)]}, ensure_ascii=False))
+            raise SystemExit(1)
+        used = [dict(item, article_label=figure_numbers.get(str(item.get("id")), {}).get("article_label", "封面")) for item in data.get("visuals", {}).get("items", []) if str(item.get("id")) in inserted]
         fragment += source_footer(data, used)
     metadata = article.get("metadata") or {}
     meta = " · ".join(str(metadata.get(key) or "").strip() for key in ("source_label", "author", "date") if str(metadata.get(key) or "").strip())
@@ -138,6 +147,7 @@ def main() -> None:
         "theme": theme,
         "category": engine.content_profile(title, source)["category"],
         "inserted_visual_ids": inserted,
+        "figure_numbers": figure_numbers,
         "warnings": validation["warnings"],
         "preservation": preservation,
     }
