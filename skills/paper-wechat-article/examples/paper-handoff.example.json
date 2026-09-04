@@ -1,0 +1,12 @@
+{
+  "paper": {
+    "title": "合成交接示例（非真实论文）",
+    "version": "demo-v1",
+    "source_url": "https://example.org/demo-paper",
+    "read_scope": "notes-only"
+  },
+  "claims": [
+    {"id": "c1", "claim": "示例笔记描述了一个分阶段处理方法，实际论文尚待核对。", "status": "unverified", "locator": "笔记：方法段，原文待核验", "notes": "仅用于演示交接格式，不能作为研究事实发布。"}
+  ],
+  "figures": []
+}

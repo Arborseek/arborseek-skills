@@ -1,0 +1,4 @@
+interface:
+  display_name: "论文解读公众号写作"
+  short_description: "承接论文解析写成中文公众号文章，原图优先配图并保留证据与来源"
+  default_prompt: "请使用 $paper-wechat-article，把刚才的论文解析写成公众号文章，先从同版本论文提取配图，没有合适原图再补充标注清楚的示意图。"

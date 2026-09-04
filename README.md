@@ -1,6 +1,6 @@
 # Arborseek Skills
 
-论文研究、内容创作与网站设计，六个可独立使用的 AI 技能。由 Arborseek（天树探界）整理维护，显示名称以功能关键词为主。
+论文研究、内容创作与网站设计，七个可独立使用的 AI 技能。由 Arborseek（天树探界）整理维护，显示名称以功能关键词为主。
 
 **唯一维护仓库：[Arborseek/arborseek-skills](https://github.com/Arborseek/arborseek-skills)。** 公众号技能已并入这里，旧 `wechat-article-skill` 仓库保留历史、不再作为新版本维护源。各平台的本地安装目录只是部署副本；后续修复、版本、打包和文档均在本仓库更新。
 
@@ -13,9 +13,12 @@
 | [论文精读与解析](skills/tianshu-tanjie-paper-reading/SKILL.md) | 解释方法、核对实验、标注证据，支持对比和复现准备 | `tianshu-tanjie-paper-reading` |
 | [小红书图文创作](skills/xiaohongshu-illustrated-post/SKILL.md) | 标题正文、主题与版式、无字底图提示词及中文排字；默认 6 张、最多 9 张 | `xiaohongshu-illustrated-post` |
 | [微信公众号智能创作与排版](skills/wechat-article-skill/SKILL.md) | 文章研究、写作配图、完整 HTML 排版与质量校验 | `wechat-article-skill` |
+| [论文解读公众号写作](skills/paper-wechat-article/SKILL.md) | 承接解析笔记，优先论文原图，不足时补示意图，输出有证据的公众号文章 | `paper-wechat-article` |
 | [科技风网站与落地页设计](skills/build-bright-tech-landing-page/SKILL.md) | 明亮科技风网站、响应式落地页、配图与交互设计规范 | `build-bright-tech-landing-page` |
 
-合集版本：**1.4.0**。三个论文技能保持 **1.2.1**，小红书 **3.2.1**，公众号 **1.1.2**，网站 **1.1.0**；技能独立版本以各自 `SKILL.md` 为准，目录与打包入口由 [catalog.json](catalog.json) 管理。保留既有 Slug，避免打断调用和交接。
+合集版本：**1.5.0**。检索/下载 **1.2.1**，解析 **1.2.2**，论文公众号 **1.0.0**，小红书 **3.2.1**，通用公众号 **1.1.2**，网站 **1.1.0**；技能独立版本以各自 `SKILL.md` 为准，目录与打包入口由 [catalog.json](catalog.json) 管理。保留既有 Slug，避免打断调用和交接。
+
+论文工作流现在可衔接为：检索 → 下载 → 精读解析 → 论文解读公众号写作。新技能独立携带公众号排版引擎；原通用公众号技能不变。先用同版本论文原图，无合适原图时才补充标明来源的重绘/AI 概念图，不合成实验证据。
 
 网站技能 1.1.0 新增中文任务入口、可覆盖的视觉建议、[独立 HTML 示例](skills/build-bright-tech-landing-page/examples/landing-page.html)、只读静态检查器与浏览器回归入口。参考 [示例说明](skills/build-bright-tech-landing-page/references/examples.md)，不要将示例作为固定整页模板。
 
@@ -24,9 +27,9 @@
 面向 **OpenClaw、Codex、Claude Code、Hermes Agent、WorkBuddy**，共用标准 `SKILL.md` 入口与独立资源目录。选择一种方式：
 
 1. 克隆/下载仓库，将 `skills/` 下需要的完整技能目录放进宿主技能目录。
-2. 运行 `python3 scripts/package.py`，在 `dist/` 中获取合集包、六个普通独立 ZIP 和六个 `-workbuddy.zip` 根目录直接导入包。WorkBuddy 优先使用对应的直接导入包。
+2. 运行 `python3 scripts/package.py`，在 `dist/` 中获取合集包、七个普通独立 ZIP 和七个 `-workbuddy.zip` 根目录直接导入包。WorkBuddy 优先使用对应的直接导入包。
 
-具体安装目录、调用方式及环境限制见 [安装与兼容指南](docs/installation.md)。不要只复制 `SKILL.md`，也不要把整个仓库当成第七个技能导入。
+具体安装目录、调用方式及环境限制见 [安装与兼容指南](docs/installation.md)。不要只复制 `SKILL.md`，也不要把整个仓库当成一个技能导入。
 
 ## 使用示例
 
@@ -39,6 +42,7 @@
 - “用论文精读与解析解释这份 PDF，重点看实验设置和结论依据。”
 - “用小红书图文创作，把这个主题写成正文并规划 6 张配图。”
 - “用微信公众号智能创作与排版，把这篇稿件做成完整 HTML。”
+- “用论文解读公众号写作，把刚才的解析笔记和 PDF 写成公众号，先用论文原图，没有合适原图再补示意图。”
 - “用科技风网站与落地页设计，为这个产品做一个响应式介绍页。”
 
 检索结果不是自动下载授权；只提供摘要时不宣称完成全文精读。下载交接保留带版本 ID、元数据与文件路径，阅读结论标明实际取得的材料范围。
@@ -51,6 +55,7 @@
 | 论文解析 | 宿主正文/图片读取能力；不内置 PDF/OCR 引擎 |
 | 小红书图文 | Python 3.9+；排字/图片检查需 Pillow、可用中文字体；实际底图需宿主图像生成工具 |
 | 微信公众号 | Python 3.9+ 与 Beautiful Soup；完整视觉验收需浏览器预览 |
+| 论文公众号 | Python 3.9+ 与 Beautiful Soup；论文取图/视觉核对依赖宿主 PDF 和图片能力，补图按需使用原生生成工具 |
 | 网站设计 | 当前项目已有框架与工具链；视觉验收需浏览器，不绑定指定框架 |
 
 依赖按各技能的 `requirements.txt` 安装到获准的环境；打包不自动安装依赖、不上传内容、不创建定时任务或部署网站。
@@ -64,7 +69,7 @@ python3 scripts/package.py
 
 Windows 可根据已有解释器使用 `py -3` 或 `python` 替代 `python3`。打包脚本只打包技能目录与安装说明，排除缓存、私人论文、环境文件和测试下载结果。
 
-检查入口覆盖论文脚本回归、公众号原有测试、小红书计划边界测试、六技能结构/引用及目录搬迁检查。**未逐个完成五个客户端的原生导入与模型端到端测试**；Windows/Linux 原生运行也未实测。网络限流、图像生成、调度、OCR 与附件展示取决于实际环境，不能由技能格式兼容推断全部可用。
+检查入口覆盖论文脚本回归、公众号原有测试、论文公众号交接与证据/配图门槛、小红书计划边界测试、七技能结构/引用及目录搬迁检查。**未逐个完成五个客户端的原生导入与模型端到端测试**；Windows/Linux 原生运行也未实测。网络限流、图像生成、调度、OCR 与附件展示取决于实际环境，不能由技能格式兼容推断全部可用。
 
 ## 来源说明
 

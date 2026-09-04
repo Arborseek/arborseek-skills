@@ -2,7 +2,7 @@
 name: tianshu-tanjie-paper-reading
 description: 基于论文原文解释方法、核对实验并标注证据；用于论文速读、精读、比较、实验评议与复现准备。
 metadata:
-  version: "1.2.1"
+  version: "1.2.2"
 ---
 
 # 论文精读与解析
@@ -47,6 +47,10 @@ metadata:
 5. 优点、局限与下一步可执行建议。
 
 按问题调整长度；用户只问一个公式就回答该公式。保存笔记时优先 Markdown，路径遵守当前任务的 `outputs/` 约定，文件名含论文 ID/短标题与版本，避免覆盖不同版本。仅在用户要求 HTML、图文笔记或可视化交付时读 [references/html-notes.md](references/html-notes.md)。不要默认启动服务器、打开外部浏览器或追加固定追问菜单。
+
+## 接着写公众号
+
+用户明确要把解析结果用于公众号时，按 [公众号交接清单](references/wechat-handoff.md) 保留论文身份、原文定位和图表线索；不要只交付脱离证据的摘要。当前环境若已发现“论文解读公众号写作”（paper-wechat-article），可由它承接，不必重复精读；未安装也能交付可用的 Markdown 笔记与材料清单。仅要求阅读时，不自动写文章或发布。
 
 ## 交付自检
 

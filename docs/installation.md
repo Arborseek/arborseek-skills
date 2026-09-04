@@ -1,6 +1,6 @@
 # 安装与兼容指南
 
-六个技能独立打包，均以 `SKILL.md` 为入口；`agents/openai.yaml` 是 Codex 的可选展示信息，其他平台的核心运行不依赖它。统一从 Arborseek/arborseek-skills 获取更新，公众号旧仓库只保留历史。
+七个技能独立打包，均以 `SKILL.md` 为入口；`agents/openai.yaml` 是 Codex 的可选展示信息，其他平台的核心运行不依赖它。统一从 Arborseek/arborseek-skills 获取更新，公众号旧仓库只保留历史。
 
 普通独立 ZIP 包含一个技能文件夹；`-workbuddy.zip` 的根目录直接放 `SKILL.md` 与资源，并补充平台展示字段。合集 ZIP 用于整体下载和维护，不作为单个技能导入。
 
@@ -29,6 +29,7 @@
 | `tianshu-tanjie-paper-reading` | 论文精读与解析 |
 | `xiaohongshu-illustrated-post` | 小红书图文创作 |
 | `wechat-article-skill` | 微信公众号智能创作与排版 |
+| `paper-wechat-article` | 论文解读公众号写作 |
 | `build-bright-tech-landing-page` | 科技风网站与落地页设计 |
 
 Slug 与技能 `name` 相同，展示名称不带品牌前缀。简介可直接参考各技能 frontmatter 的 `description`。维护者信息可使用 Arborseek（天树探界），不冒称其他作者参与或背书。
@@ -44,7 +45,7 @@ Slug 与技能 `name` 相同，展示名称不带品牌前缀。简介可直接�
 - 定时任务只在用户明确要求且宿主原生调度工具可用时配置；安装不会自动创建定时任务。
 - 多个客户端共享同一服务端限流，arXiv 请求仍须串行，不能并发调用以规避限制。
 
-论文运行路由见各自 `references/platform-compatibility.md`；其余技能见各自 `references/runtime.md`。不要求使用所有六个技能，只安装需要的完整目录即可。
+论文运行路由见各自 `references/platform-compatibility.md`；其余技能见各自 `references/runtime.md`。不要求使用所有七个技能，只安装需要的完整目录即可。论文公众号可独立安装；搭配解析技能 1.2.2 可保留更完整的交接，但也接受旧版 Markdown 阅读笔记。
 
 ## 验收
 
