@@ -1,0 +1,121 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "WeChat Article Package",
+  "type": "object",
+  "required": ["schema_version", "article", "research", "visuals", "layout", "qa"],
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {"const": "1.0"},
+    "article": {
+      "type": "object",
+      "required": ["title", "topic", "article_type", "tone", "visual_theme", "background", "content_html"],
+      "properties": {
+        "id": {"type": "string"},
+        "title": {"type": "string", "minLength": 1},
+        "subtitle": {"type": "string"},
+        "topic": {"type": "string", "minLength": 1},
+        "audience": {"type": "string"},
+        "goal": {"type": "string"},
+        "article_type": {"enum": ["auto", "technical-paper", "data-report", "interview-profile", "launch-news", "editorial-analysis", "event-promo", "tutorial"]},
+        "tone": {"enum": ["auto", "professional", "academic", "accessible", "sharp", "narrative"]},
+        "visual_theme": {"enum": ["auto", "blueprint", "teal-editorial", "cobalt-journal", "violet-dialogue", "orange-launch", "cyan-research"]},
+        "background": {"const": "white"},
+        "summary": {"type": "string"},
+        "content_html": {"type": "string", "minLength": 1},
+        "metadata": {
+          "type": "object",
+          "properties": {"author": {"type": "string"}, "date": {"type": "string"}, "source_label": {"type": "string"}}
+        }
+      }
+    },
+    "research": {
+      "type": "object",
+      "required": ["mode", "query", "claims", "sources"],
+      "properties": {
+        "mode": {"enum": ["none", "light", "standard", "deep"]},
+        "query": {"type": "string"},
+        "claims": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["id", "claim", "status", "source_urls"],
+            "properties": {
+              "id": {"type": "string", "minLength": 1},
+              "claim": {"type": "string", "minLength": 1},
+              "status": {"enum": ["verified", "inference", "unverified"]},
+              "source_urls": {"type": "array", "items": {"type": "string", "format": "uri"}},
+              "notes": {"type": "string"}
+            }
+          }
+        },
+        "sources": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["url", "title", "publisher"],
+            "properties": {
+              "url": {"type": "string", "format": "uri"},
+              "title": {"type": "string", "minLength": 1},
+              "publisher": {"type": "string", "minLength": 1},
+              "published_at": {"type": "string"},
+              "accessed_at": {"type": "string"},
+              "source_type": {"type": "string"},
+              "used_for": {"type": "string"}
+            }
+          }
+        }
+      }
+    },
+    "visuals": {
+      "type": "object",
+      "required": ["policy", "density", "items"],
+      "properties": {
+        "policy": {"enum": ["none", "provided-only", "search", "generate", "hybrid"]},
+        "density": {"enum": ["sparse", "balanced", "rich"]},
+        "items": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["id", "role", "placement", "source_type", "status", "alt"],
+            "properties": {
+              "id": {"type": "string", "minLength": 1},
+              "role": {"enum": ["cover", "section", "diagram", "chart", "portrait", "product", "decorative"]},
+              "placement": {"type": "string", "minLength": 1},
+              "aspect_ratio": {"type": "string"},
+              "source_type": {"enum": ["provided", "searched", "generated", "chart", "diagram"]},
+              "status": {"enum": ["planned", "candidate", "approved", "ready", "rejected"]},
+              "alt": {"type": "string", "minLength": 1},
+              "caption": {"type": "string"},
+              "search_query": {"type": "string"},
+              "generation_prompt": {"type": "string"},
+              "source_url": {"type": "string"},
+              "source_page_url": {"type": "string"},
+              "local_path": {"type": "string"},
+              "credit": {"type": "string"},
+              "license": {"type": "string"},
+              "generated_disclosure": {"type": "boolean"}
+            }
+          }
+        }
+      }
+    },
+    "layout": {
+      "type": "object",
+      "required": ["theme", "seed"],
+      "properties": {
+        "theme": {"enum": ["auto", "blueprint", "teal-editorial", "cobalt-journal", "violet-dialogue", "orange-launch", "cyan-research"]},
+        "theme_reason": {"type": "string"},
+        "seed": {"type": "string"}
+      }
+    },
+    "qa": {
+      "type": "object",
+      "properties": {
+        "content_reviewed": {"type": "boolean"},
+        "sources_reviewed": {"type": "boolean"},
+        "visuals_reviewed": {"type": "boolean"},
+        "browser_reviewed": {"type": "boolean"}
+      }
+    }
+  }
+}

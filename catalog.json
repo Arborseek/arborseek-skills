@@ -1,0 +1,11 @@
+{
+  "bundle_version": "1.3.0",
+  "skills": [
+    {"name": "tianshu-tanjie-paper-search", "display_name": "arXiv 论文检索与筛选", "category": "research", "tests": "scripts"},
+    {"name": "tianshu-tanjie-arxiv", "display_name": "arXiv 论文下载", "category": "research", "tests": "scripts"},
+    {"name": "tianshu-tanjie-paper-reading", "display_name": "论文精读与解析", "category": "research"},
+    {"name": "xiaohongshu-illustrated-post", "display_name": "小红书图文创作", "category": "writing", "tests": "tests"},
+    {"name": "wechat-article-skill", "display_name": "微信公众号智能创作与排版", "category": "writing", "tests": "tests"},
+    {"name": "build-bright-tech-landing-page", "display_name": "科技风网站与落地页设计", "category": "development"}
+  ]
+}

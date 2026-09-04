@@ -1,0 +1,50 @@
+{
+  "schema_version": "1.0",
+  "article": {
+    "id": "demo-001",
+    "title": "机器人如何学会预测下一步",
+    "subtitle": "",
+    "topic": "人形机器人行为世界模型",
+    "audience": "对具身智能感兴趣的产业读者",
+    "goal": "解释技术原理、证据边界与应用价值",
+    "article_type": "technical-paper",
+    "tone": "accessible",
+    "visual_theme": "blueprint",
+    "background": "white",
+    "summary": "用非专业读者能理解的方式解释行为世界模型。",
+    "content_html": "<h2>为什么需要预测</h2><p>机器人执行动作之前，需要估计动作可能带来的状态变化。这种预测能力可以帮助系统减少盲目试错。</p><h2>模型如何工作</h2><p>文章应在这里解释输入、状态表示、动作生成与评测方法，并给出可核查来源。</p>",
+    "metadata": {"author": "", "date": "", "source_label": "技术解读"}
+  },
+  "research": {
+    "mode": "standard",
+    "query": "人形机器人 行为世界模型 官方论文 项目页",
+    "claims": [],
+    "sources": []
+  },
+  "visuals": {
+    "policy": "hybrid",
+    "density": "balanced",
+    "items": [
+      {
+        "id": "visual-01",
+        "role": "cover",
+        "placement": "cover",
+        "aspect_ratio": "2:1",
+        "source_type": "generated",
+        "status": "planned",
+        "alt": "机器人在执行动作前预测环境状态变化",
+        "caption": "",
+        "search_query": "",
+        "generation_prompt": "为机器人行为世界模型技术解读创作2:1公众号封面，工程蓝图视觉语言，纯白或浅色基底，不含文字、Logo、水印，不伪造实验数据。",
+        "source_url": "",
+        "source_page_url": "",
+        "local_path": "",
+        "credit": "",
+        "license": "",
+        "generated_disclosure": true
+      }
+    ]
+  },
+  "layout": {"theme": "blueprint", "theme_reason": "技术架构型长文", "seed": "wechat-studio-v1"},
+  "qa": {"content_reviewed": false, "sources_reviewed": false, "visuals_reviewed": false, "browser_reviewed": false}
+}

@@ -2,10 +2,15 @@
 import argparse
 import hashlib
 import io
+import json
 import zipfile
 from pathlib import Path
 
-from check import NAMES, ROOT, skill_files, validate
+from check import CATALOG, NAMES, ROOT, metadata, skill_files, validate
+
+
+def content(source):
+    return source if isinstance(source, bytes) else source.read_bytes()
 
 
 def archive(path, entries):
@@ -16,13 +21,13 @@ def archive(path, entries):
             info.compress_type = zipfile.ZIP_DEFLATED
             info.create_system = 3
             info.external_attr = 0o100644 << 16
-            output.writestr(info, source.read_bytes())
+            output.writestr(info, content(source))
     data = buffer.getvalue()
     with zipfile.ZipFile(io.BytesIO(data)) as result:
         if result.testzip() is not None or set(result.namelist()) != set(entries):
             raise ValueError('Archive verification failed')
         for relative, source in entries.items():
-            if result.read(relative) != source.read_bytes():
+            if result.read(relative) != content(source):
                 raise ValueError('Content mismatch: ' + relative)
     if path.exists():
         if path.is_symlink() or path.read_bytes() != data:
@@ -42,14 +47,27 @@ def main():
     suite = {}
     for name in NAMES:
         root = ROOT / 'skills' / name
+        skill_version = metadata(root)['version']
         entries = {str(Path(name) / p.relative_to(root)).replace('\\', '/'): p
                    for p in skill_files(root)}
-        archive(args.output_dir / (name + '-' + version + '.zip'), entries)
+        archive(args.output_dir / (name + '-' + skill_version + '.zip'), entries)
+        direct = {str(p.relative_to(root)).replace('\\', '/'): p for p in skill_files(root)}
+        item = next(item for item in CATALOG['skills'] if item['name'] == name)
+        text = (root / 'SKILL.md').read_text(encoding='utf-8')
+        end = text.index('\n---\n', 4)
+        fields = {'name': name, 'display_name': item['display_name'],
+                  'description': metadata(root)['description'], 'version': skill_version,
+                  'author': 'Arborseek', 'category': item['category']}
+        header = '\n'.join(key + ': ' + json.dumps(value, ensure_ascii=False)
+                           for key, value in fields.items())
+        direct['SKILL.md'] = ('---\n' + header + '\nuser-invocable: true\n---\n'
+                              + text[end + 5:]).encode('utf-8')
+        archive(args.output_dir / (name + '-' + skill_version + '-workbuddy.zip'), direct)
         suite.update({'skills/' + relative: source for relative, source in entries.items()})
-    for relative in ('README.md', 'CHANGELOG.md', 'docs/installation.md',
+    for relative in ('README.md', 'CHANGELOG.md', 'catalog.json', 'docs/installation.md',
                      'scripts/check.py', 'scripts/package.py'):
         suite[relative] = ROOT / relative
-    archive(args.output_dir / ('arborseek-paper-skills-' + version + '.zip'), suite)
+    archive(args.output_dir / ('arborseek-skills-' + version + '.zip'), suite)
 
 
 if __name__ == '__main__':

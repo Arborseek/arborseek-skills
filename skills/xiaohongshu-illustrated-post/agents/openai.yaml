@@ -1,0 +1,8 @@
+interface:
+  display_name: "小红书图文创作"
+  short_description: "从选题到正文与配图，智能选择主题并生成多风格小红书图文内容"
+  brand_color: "#1456C0"
+  default_prompt: "Use $xiaohongshu-illustrated-post to turn my topic into a polished Xiaohongshu post and choose the best visual theme and layouts for its illustrations."
+
+policy:
+  allow_implicit_invocation: true

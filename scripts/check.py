@@ -8,9 +8,9 @@ import tempfile
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-NAMES = ('tianshu-tanjie-paper-search', 'tianshu-tanjie-arxiv',
-         'tianshu-tanjie-paper-reading')
-DISPLAY_NAMES = ('arXiv 论文检索与筛选', 'arXiv 论文下载', '论文精读与解析')
+CATALOG = json.loads((ROOT / 'catalog.json').read_text(encoding='utf-8'))
+NAMES = tuple(item['name'] for item in CATALOG['skills'])
+DISPLAY_NAMES = tuple(item['display_name'] for item in CATALOG['skills'])
 
 
 def skill_files(root):
@@ -36,14 +36,18 @@ def metadata(root):
 
 
 def validate():
-    versions = set()
+    if len(set(NAMES)) != len(NAMES):
+        raise ValueError('Duplicate catalog entry')
+    actual = {p.name for p in (ROOT / 'skills').iterdir() if p.is_dir()}
+    if actual != set(NAMES):
+        raise ValueError('Skill directories and catalog differ')
     for name, display in zip(NAMES, DISPLAY_NAMES):
         root = ROOT / 'skills' / name
-        versions.add(metadata(root)['version'])
+        metadata(root)
         interface = (root / 'agents/openai.yaml').read_text(encoding='utf-8')
         if 'display_name: "' + display + '"' not in interface:
             raise ValueError('Unexpected display name: ' + name)
-        for required in ('SOURCES.md', 'references/platform-compatibility.md'):
+        for required in ('SOURCES.md',):
             if not (root / required).is_file():
                 raise ValueError('Missing: ' + required)
         for file in skill_files(root):
@@ -57,16 +61,19 @@ def validate():
                 resolved = (file.parent / link.split('#')[0]).resolve()
                 if root.resolve() not in resolved.parents or not resolved.is_file():
                     raise ValueError('Broken or external local reference: ' + str(file) + ' -> ' + link)
-    if len(versions) != 1:
-        raise ValueError('Suite versions differ')
-    return versions.pop()
+    if not re.fullmatch(r'\d+\.\d+\.\d+', CATALOG['bundle_version']):
+        raise ValueError('Invalid collection version')
+    return CATALOG['bundle_version']
 
 
 def main():
-    print('Validating skills version ' + validate(), flush=True)
-    for name in NAMES[:2]:
+    print('Validating collection ' + validate(), flush=True)
+    for item in CATALOG['skills']:
+        if 'tests' not in item:
+            continue
+        name = item['name']
         subprocess.run([sys.executable, '-X', 'utf8', '-m', 'unittest', 'discover',
-                        '-s', str(ROOT / 'skills' / name / 'scripts'), '-p', 'test_*.py'], check=True)
+                        '-s', str(ROOT / 'skills' / name / item['tests']), '-p', 'test_*.py'], check=True)
     with tempfile.TemporaryDirectory(prefix='paper skills 中文 ') as tmp:
         base = Path(tmp)
         cwd = base / 'unrelated working directory'
@@ -86,7 +93,7 @@ def main():
         if list(cwd.iterdir()):
             raise ValueError('Offline startup wrote unexpected files')
     print('PASS: offline tests, skill structure, local references, and relocated startup.')
-    print('Not tested here: network, native client import, model behavior, PDF/OCR.')
+    print('Not tested here: network, native client import, model behavior, images, browser UI, PDF/OCR.')
 
 
 if __name__ == '__main__':
