@@ -13,7 +13,7 @@
 - `figures`：每个图位有 `id`、`kind`（original / redraw / generated）、`label`（Fig. 2 等）、`locator`、`local_path`、`alt`、`caption`、`credit`、`rights_status`（cleared / unknown）、`rights_note`、`checked`（是否实际查看核对）、`use_as_evidence`（布尔）。无图时使用空数组。
 - redraw / generated 额外有 `fallback_reason`，写清已检查哪些原图以及为什么不适用；generated 另需 `generation_prompt`。它们只能承担说明作用，不能被声明为原论文实验证据。
 
-`prepare` 将每条结论连到本篇来源，并把 locator 写入 research.claims[].notes；图注附带图号、原文位置、署名和“论文原图 / 依据原文重绘示意 / AI 生成概念配图”。图位初始都是 candidate，即使文件存在也不会自动就绪。没有图时不强制封面。
+`prepare` 将每条结论连到本篇来源，并把 locator 写入 research.claims[].notes；原始图注和全部出处保存在 paper_figure。可选 reader_caption 单独写简短中文图注；未提供时先取 alt（再回退 caption）作为编辑起点，助手必须检查其可读性。图号保留一次，不拼接页码、作者全称和 URL。署名及来源由渲染器集中列于文末；特殊许可的必要署名可登记在 paper_figure.attribution。图位初始都是 candidate，即使文件存在也不会自动就绪。没有图时不强制封面。
 
 ## 编辑 article.json
 

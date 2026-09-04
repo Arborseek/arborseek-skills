@@ -65,7 +65,8 @@ class PaperBridgeTests(unittest.TestCase):
         self.assertTrue(bridge.check(package, root)["valid"])
         image = package["visuals"]["items"][0]
         self.assertIn("项目网站素材，非论文原图", image["caption"])
-        self.assertIn("https://example.org/project", image["caption"])
+        self.assertNotIn("https://example.org/project", image["caption"])
+        self.assertIn("https://example.org/project", bridge.source_footer(package, [image]))
         self.assertFalse(image["paper_figure"]["use_as_evidence"])
         self.assertFalse(bridge.check(self.approve(package), root, True)["valid"])
 
@@ -91,7 +92,9 @@ class PaperBridgeTests(unittest.TestCase):
         self.assertEqual(item["status"], "candidate")
         self.assertEqual(item["local_path"], str((self.base / "figure.svg").resolve()))
         self.assertIn("Fig. 1", item["caption"])
-        self.assertIn("论文原图", item["caption"])
+        self.assertEqual(item["caption"], "Fig. 1｜合成测试图片")
+        self.assertNotIn("PDF 第", item["caption"])
+        self.assertEqual(item["paper_figure"]["locator"], "PDF 第 2 页")
         self.assertTrue(bridge.check(data, self.base)["valid"])
 
     def test_final_needs_actual_review(self):
@@ -202,11 +205,70 @@ class PaperBridgeTests(unittest.TestCase):
         result = self.run_cli("render", package, target, "--require-ready")
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
         output = target.read_text(encoding="utf-8")
-        self.assertIn("论文原图", output)
         self.assertIn("Fig. 1", output)
+        from bs4 import BeautifulSoup
+        soup = BeautifulSoup(output, "html.parser")
+        self.assertEqual(soup.figcaption.get_text(), "Fig. 1｜合成测试图片")
+        self.assertIn("测试作者", soup.select_one(".paper-references").get_text())
+        self.assertNotIn("PDF 第", output)
+        self.assertNotIn("草稿素材", output)
         self.assertEqual(len(list((target.parent / "assets").iterdir())), 1)
         result = subprocess.run([sys.executable, str(ROOT / "scripts/lint_article_output.py"), str(target)], capture_output=True, text=True)
         self.assertEqual(result.returncode, 0, result.stdout)
+
+    def test_render_is_final_by_default_and_draft_is_explicit(self):
+        data = self.original()
+        package = self.base / "article.json"
+        package.write_text(json.dumps(data), encoding="utf-8")
+        target = self.base / "final.html"
+        self.assertNotEqual(self.run_cli("render", package, target).returncode, 0)
+        self.assertFalse(target.exists())
+        preview = self.base / "preview.html"
+        result = self.run_cli("render", package, preview, "--draft-images")
+        self.assertEqual(result.returncode, 0, result.stdout)
+        from bs4 import BeautifulSoup
+        soup = BeautifulSoup(preview.read_text(), "html.parser")
+        self.assertEqual(len(soup.select(".internal-preview-notice")), 1)
+        self.assertNotIn("不可直接发布", soup.figcaption.get_text())
+
+    def test_short_caption_preserves_internal_evidence(self):
+        self.original()
+        self.handoff["figures"][0]["reader_caption"] = "不同训练数据量的对齐表现"
+        data = self.approve(self.package())
+        item = data["visuals"]["items"][0]
+        self.assertEqual(item["caption"], "Fig. 1｜不同训练数据量的对齐表现")
+        self.assertEqual(item["paper_figure"]["caption"], self.handoff["figures"][0]["caption"])
+        self.assertTrue(bridge.check(data, self.base, True)["valid"])
+
+    def test_final_rejects_worklog_in_body_or_caption(self):
+        for marker in ("【草稿素材：使用权限待确认】", "待补图", "视觉未验收"):
+            data = self.approve(self.original())
+            data["article"]["content_html"] += "<p>" + marker + "</p>"
+            self.assertFalse(bridge.check(data, self.base, True)["valid"])
+            data = self.approve(self.original())
+            data["visuals"]["items"][0]["caption"] += marker
+            self.assertFalse(bridge.check(data, self.base, True)["valid"])
+
+    def test_sources_deduplicate_and_exclude_rejected_figures(self):
+        data = self.approve(self.original())
+        one = data["visuals"]["items"][0]
+        two = copy.deepcopy(one)
+        two["paper_figure"].update(label="Fig. 2", attribution="CC BY credit fixture")
+        footer = bridge.source_footer(data, [one, two])
+        from bs4 import BeautifulSoup
+        soup = BeautifulSoup(footer, "html.parser")
+        self.assertEqual(len(soup.find_all("a", href=self.handoff["paper"]["source_url"])), 1)
+        self.assertIn("Fig. 2", soup.get_text())
+        self.assertIn("CC BY credit fixture", soup.get_text())
+        self.assertNotIn("rights_status", footer)
+
+    def test_lower_renderer_cannot_bypass_final_gate(self):
+        package = self.base / "article.json"
+        package.write_text(json.dumps(self.original()), encoding="utf-8")
+        result = subprocess.run([sys.executable, str(ROOT / "scripts/render_article_package.py"),
+                                 str(package), str(self.base / "bypass.html")], capture_output=True)
+        self.assertNotEqual(result.returncode, 0)
+        self.assertFalse((self.base / "bypass.html").exists())
 
 
 if __name__ == "__main__":

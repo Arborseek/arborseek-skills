@@ -28,4 +28,4 @@ python3 scripts/paper_workspace.py import-figure paper-v1 --image host-export.pn
 
 保存 reading.md 后，将 `notes_path` 设为 `reading.md`；每个用于文章的结论写入 claims，包含状态、原文定位与推断说明。不把整个精读结论自动标为 verified。
 
-公众号技能可直接把 paper-workspace.json 当作 prepare 的输入，不要求重复导图。--draft-images 可在内部草稿中显示待核验图片并附醒目警示；最终 --require-ready 不允许未就绪图，也不把研究用途的本地留存当成已获转载许可。
+公众号技能可直接把 paper-workspace.json 当作 prepare 的输入，不要求重复导图。默认 render 执行成稿检查；--draft-images 仅用于内部预览，顶部提示一次，不把警告塞进每张图注。成稿不允许未就绪图，也不把研究用途的本地留存当成已获转载许可。

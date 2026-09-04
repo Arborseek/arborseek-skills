@@ -2,12 +2,22 @@
 name: paper-wechat-article
 description: 将论文解析笔记与原文转成中文公众号文章，优先提取论文原图，不足时补充标注清楚的示意图，并输出 HTML。
 metadata:
-  version: "1.2.0"
+  version: "1.3.0"
 ---
 
 # 论文解读公众号写作
 
-把“研究者读懂了”转换为“读者能顺着读下去”：解释问题、核心方法、实验能支持什么以及局限，而不是逐段翻译论文或把精读笔记换成营销口吻。默认交付中文公众号 HTML 与必要图片文件，不自动发布。
+把“研究者读懂了”转换为“读者能顺着读下去”：解释问题、核心方法、实验能支持什么以及局限，而不是逐段翻译论文或把精读笔记换成营销口吻。默认完成编辑与核查后交付面向读者的中文成稿、HTML 与必要图片，不把内部预览当成稿交付，不自动操作公众号发布。
+
+## 成稿与工作记录分离
+
+正文不放“草稿素材、使用权限待确认、不可直接发布”、任务进度、核查表或原始 JSON 字段。每图通常只用“图号｜一句中文说明”，例如“图 9｜不同训练数据量下的师生对齐表现”。解释坐标和实验条件确有必要时融入正文，不在图注堆页码、全称、作者、URL。论文与图片出处由渲染器集中在文末列出；许可证要求的署名不能删除，重绘、AI 图和网站素材仍保留简短身份标记。
+
+原图完整图注、页码、哈希、核查和使用依据留在 article.json / paper-workspace.json；文章图注另写 reader_caption 或编辑 visuals.items[].caption。不要把原图长图注直接当公众文案。此规则同时适用于 Markdown、HTML 和直接聊天输出。
+
+文末论文来源必须可点击：HTML 用真实 a 标签，href 指向官方论文地址；Markdown 用标准链接语法，不要只写纯文字 URL 或转义成可见的 HTML 源码。链接文字为论文标题，保留对应论文版本；本地私有论文没有公开网址时不编造链接。公众号后台可能限制外链跳转，粘贴到后台后另行预览核验，不能以本地链接有效代替平台检查。
+
+用户要可发布稿时，先实际核查素材；无法解决的非必要图位改用已有可用素材或省略并调整正文，不留“待补图”。不能为通过检查虚构授权、把 checked 自动改为 true，或只删警告后宣布完成。必要证据确实缺失时在正文之外简短说明阻塞项，不以一份贴满警告的文章作为最终交付。
 
 此技能由通用公众号技能分出，独立携带排版引擎，无需同时安装其他技能。仅做精读用论文解析技能；非论文文章用通用公众号技能。首次使用先读 [运行约定](references/runtime.md)。来源见 [SOURCES.md](SOURCES.md)。
 
@@ -42,15 +52,14 @@ metadata:
 ```bash
 python3 scripts/paper_article.py prepare paper-handoff.json draft.html article.json --title "文章标题"
 python3 scripts/paper_article.py check article.json
-python3 scripts/paper_article.py render article.json preview.html --draft-images
-# 人工核对文章、来源、图片并更新 article.json 后，才使用最终门槛：
+# 实际完成文章、图像与来源核查后，更新 article.json；默认 render 即执行成稿检查：
 python3 scripts/paper_article.py render article.json final.html --require-ready
 python3 scripts/lint_article_output.py final.html
 ```
 
 上述路径是用法示例，执行时换成用户任务中的文件。`prepare` 不生成文章、不下载图片、不把笔记自动认证成事实，也不覆盖已有输出。`render` 复用公众号引擎；不要绕过 `paper_article.py` 的证据检查直接调用底层渲染器。
 
-`--draft-images` 仅用于内部预览，显示候选原图与“待核验/权限待确认”警示，不更改审核状态；不能与 --require-ready 合用。新文章包采用相对路径，整个资料目录一起移动即可继续使用，不单独发送缺少原图的 JSON。
+仅在编辑调试或用户明确要草稿时用 `--draft-images`：顶部显示一次内部预览提示，不在每张图注加警告，也不更改审核状态；不能与 --require-ready 合用。默认 render 不允许未就绪图或未核验事实。新文章包采用相对路径，整个资料目录一起移动即可继续使用，不单独发送缺少原图的 JSON。
 
 桌面及约 390px 手机宽度实际预览：图中文字清晰、比例完整、图注与来源可见，无横向溢出。复杂图可以追加放大局部，并保留完整图及关联图号。没有浏览器能力就标记“视觉未验收”，不能写“可直接发布”。
 

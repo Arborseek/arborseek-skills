@@ -7,6 +7,7 @@ import json
 import os
 import re
 import math
+import html
 import subprocess
 import sys
 from pathlib import Path
@@ -18,6 +19,66 @@ from paper_workspace import SCHEMA as WORKSPACE_SCHEMA, sha256, validate as vali
 
 LABELS = {"original": "论文原图", "redraw": "依据原文重绘示意", "generated": "AI 生成概念配图，非论文原图", "project": "项目网站素材，非论文原图"}
 SCOPES = {"full-text", "partial", "abstract", "notes-only"}
+INTERNAL_MARKERS = ("草稿素材", "使用权限待确认", "图像/使用权限", "不可直接发布", "待补图", "视觉未验收")
+
+
+def reader_caption(figure):
+    """Keep archival captions/locators intact; build a separate editorial caption."""
+    kind = figure["kind"]
+    text = str(figure.get("reader_caption") or figure.get("alt") or figure.get("caption") or "").strip()
+    label = str(figure.get("label") or "").strip()
+    if kind == "original":
+        return (label + "｜" if label and label not in text else "") + text
+    return LABELS[kind] + ("｜" + text if text else "")
+
+
+def source_footer(data, items):
+    """Reader-facing, deduplicated citations; never print the audit manifest."""
+    soup = BeautifulSoup("", "html.parser")
+    section = soup.new_tag("section", attrs={"class": "paper-references"})
+    heading = soup.new_tag("h2")
+    heading.string = "参考资料与图片来源"
+    section.append(heading)
+    records = {}
+    paper = data["paper"]
+    sources = list(data.get("research", {}).get("sources", []))
+    sources.insert(0, {"url": paper["source_url"], "title": paper["title"], "publisher": ""})
+    for source in sources:
+        url = source.get("url", "")
+        entry = records.setdefault(url, {"title": source.get("title") or url, "credits": [], "figures": []})
+        credit = source.get("publisher", "")
+        if credit and credit not in entry["credits"]:
+            entry["credits"].append(credit)
+    for item in items:
+        figure = item.get("paper_figure", {})
+        url = item.get("source_page_url") or paper["source_url"]
+        entry = records.setdefault(url, {"title": "项目网站", "credits": [], "figures": []})
+        for key, value in (("credits", item.get("credit", "")), ("figures", figure.get("label", ""))):
+            if value and value not in entry[key]:
+                entry[key].append(value)
+        # License-specific attribution remains visible even when generic metadata moves.
+        attribution = figure.get("attribution", "")
+        if attribution and attribution not in entry["credits"]:
+            entry["credits"].append(attribution)
+        if figure.get("origin") == "video-frame":
+            timestamp = "视频 %.3f 秒" % figure["timestamp_seconds"]
+            if timestamp not in entry["figures"]:
+                entry["figures"].append(timestamp)
+    for url, entry in records.items():
+        p = soup.new_tag("p")
+        if urlparse(url).scheme in {"http", "https"}:
+            link = soup.new_tag("a", href=url, rel="noopener noreferrer", target="_blank")
+            link.string = entry["title"]
+            p.append(link)
+        else:
+            p.append(entry["title"])
+        details = entry["credits"] + ([paper["version"]] if url == paper["source_url"] else [])
+        if entry["figures"]:
+            details.append("图片：" + "、".join(entry["figures"]))
+        if details:
+            p.append(" — " + "；".join(details))
+        section.append(p)
+    return str(section)
 
 
 def nonempty(value):
@@ -94,11 +155,10 @@ def prepare(handoff, draft, title, base, project_images=None):
         if local and not isinstance(local, str):
             raise ValueError("figure.local_path must be a string")
         resolved = str((base / local).resolve()) if local else ""
-        caption = " · ".join(str(figure.get(key) or "") for key in ("caption", "label", "locator", "credit"))
         item = {"id": figure.get("id"), "role": "section", "placement": "after-intro",
                 "source_type": {"original": "provided", "redraw": "diagram", "generated": "generated", "project": "provided"}[kind],
                 "status": "candidate", "alt": figure.get("alt", ""),
-                "caption": LABELS[kind] + " · " + caption + " · " + (figure["source_page_url"] if kind == "project" else paper["source_url"]),
+                "caption": reader_caption(figure),
                 "local_path": resolved, "source_page_url": figure["source_page_url"] if kind == "project" else paper["source_url"],
                 "credit": figure.get("credit", ""), "license": figure.get("rights_note", ""),
                 "paper_figure": copy.deepcopy(figure)}
@@ -159,6 +219,10 @@ def check(data, base, ready=False):
     if not isinstance(article, dict):
         article = {}
     soup = BeautifulSoup(str(article.get("content_html", "")), "html.parser")
+    if ready:
+        public_text = html.unescape(soup.get_text(" ") + " " + str(article.get("title", "")))
+        if any(marker in public_text for marker in INTERNAL_MARKERS):
+            errors.append("Internal review markers must be kept outside the final article")
     if soup.find(["img", "svg", "video", "iframe", "object", "embed", "picture"]):
         errors.append("Put all images in visuals.items for provenance checks, not content_html")
     research = data.get("research", {})
@@ -203,8 +267,8 @@ def check(data, base, ready=False):
             source = next((a for a in project_assets if isinstance(a, dict) and a.get("id") == figure.get("project_asset_id")), None)
             if not source or source.get("media_type") != "image" or source.get("sha256") != figure.get("sha256"):
                 errors.append(prefix + "project image has no matching archived source")
-            elif source.get("source_page_url") != item.get("source_page_url") or source["source_page_url"] not in str(item.get("caption", "")):
-                errors.append(prefix + "project source page must remain in the visible caption")
+            elif source.get("source_page_url") != item.get("source_page_url"):
+                errors.append(prefix + "project source page must remain in the source record")
         expected = {"original": "provided", "redraw": "diagram", "generated": "generated", "project": "provided"}[kind]
         if item.get("source_type") != expected:
             errors.append(prefix + "source_type disagrees with paper_figure.kind")
@@ -219,17 +283,20 @@ def check(data, base, ready=False):
                 errors.append(prefix + "supplementary illustrations cannot be experimental evidence")
         if kind == "original" and (item.get("role") == "cover" or item.get("placement") == "cover"):
             errors.append(prefix + "keep original figures in the body with visible captions")
-        if LABELS[kind] not in str(item.get("caption", "")):
+        if kind != "original" and LABELS[kind] not in str(item.get("caption", "")):
             errors.append(prefix + "caption must disclose the image kind")
         if ready or item.get("status") == "ready":
             for key in ("caption", "credit", "alt"):
                 if not nonempty(item.get(key)):
                     errors.append(prefix + key + " is required")
             for key in ("label", "locator") if kind == "original" else ():
-                if not nonempty(figure.get(key)) or figure[key] not in str(item.get("caption", "")):
-                    errors.append(prefix + key + " must appear in the visible caption")
-            if item.get("credit") and item["credit"] not in str(item.get("caption", "")):
-                errors.append(prefix + "credit must remain in the visible caption")
+                if not nonempty(figure.get(key)):
+                    errors.append(prefix + key + " must remain in the provenance record")
+            caption = html.unescape(str(item.get("caption", "")))
+            if any(marker in caption for marker in INTERNAL_MARKERS) or "&#" in caption:
+                errors.append(prefix + "remove internal markers/escaped entities from the reader caption")
+            if kind == "original" and ("PDF 第" in caption or "http://" in caption or "https://" in caption):
+                errors.append(prefix + "move page locators and URLs to records/references; use a short reader caption")
             if figure.get("checked") is not True:
                 errors.append(prefix + "image has not been visually checked")
             if figure.get("rights_status") != "cleared" or not nonempty(figure.get("rights_note")):
@@ -278,11 +345,12 @@ def main():
                     json.dump(data, stream, ensure_ascii=False, indent=2)
         else:
             data = json.loads(args.package.read_text(encoding="utf-8"))
-            report = check(data, args.package.parent, args.require_ready)
+            final_render = args.command == "render" and not args.draft_images
+            report = check(data, args.package.parent, args.require_ready or final_render)
             if report["valid"] and args.command == "render":
                 cmd = [sys.executable, str(Path(__file__).with_name("render_article_package.py")),
                        str(args.package), str(args.output)]
-                if args.require_ready:
+                if args.require_ready or final_render:
                     cmd.append("--require-ready")
                 if args.draft_images:
                     cmd.append("--include-candidates")

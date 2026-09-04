@@ -45,8 +45,6 @@ def insert_visuals(fragment: str, items: list[dict], package_dir: Path, output_d
         image = soup.new_tag("img", attrs={"src": src, "alt": str(item.get("alt") or "文章配图")})
         figure.append(image)
         caption_text = str(item.get("caption") or item.get("credit") or "").strip()
-        if candidate:
-            caption_text = "【草稿素材：图像/使用权限待确认，不可直接发布】" + caption_text
         if caption_text:
             caption = soup.new_tag("figcaption", attrs={"class": "caption"})
             caption.string = caption_text
@@ -73,6 +71,10 @@ def insert_visuals(fragment: str, items: list[dict], package_dir: Path, output_d
         else:
             soup.append(figure)
         inserted.append(str(item.get("id")))
+    if include_candidates:
+        notice = soup.new_tag("aside", attrs={"class": "internal-preview-notice"})
+        notice.string = "内部预览，不可直接发布；待办见核查记录。"
+        soup.insert(0, notice)
     return str(soup), cover_url, inserted
 
 
@@ -88,7 +90,11 @@ def main() -> None:
         parser.error("Candidate images cannot be included in a final render")
 
     data = json.loads(args.package.read_text(encoding="utf-8"))
-    validation = validate_package(data, args.package.parent, args.require_ready)
+    if "paper" in data:
+        from paper_article import check, source_footer
+        validation = check(data, args.package.parent, not args.include_candidates)
+    else:
+        validation = validate_package(data, args.package.parent, args.require_ready)
     if not validation["valid"]:
         print(json.dumps(validation, ensure_ascii=False, indent=2))
         raise SystemExit(1)
@@ -102,6 +108,9 @@ def main() -> None:
     args.output.parent.mkdir(parents=True, exist_ok=True)
     fragment, preservation = engine.sanitize(source, title, args.package.parent, args.output.parent)
     fragment, cover_url, inserted = insert_visuals(fragment, data.get("visuals", {}).get("items", []), args.package.parent, args.output.parent, args.include_candidates)
+    if "paper" in data:
+        used = [item for item in data.get("visuals", {}).get("items", []) if str(item.get("id")) in inserted]
+        fragment += source_footer(data, used)
     metadata = article.get("metadata") or {}
     meta = " · ".join(str(metadata.get(key) or "").strip() for key in ("source_label", "author", "date") if str(metadata.get(key) or "").strip())
     args.output.write_text(engine.document(title, fragment, theme, meta, cover_url), encoding="utf-8")
