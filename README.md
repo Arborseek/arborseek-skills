@@ -15,7 +15,9 @@
 | [微信公众号智能创作与排版](skills/wechat-article-skill/SKILL.md) | 文章研究、写作配图、完整 HTML 排版与质量校验 | `wechat-article-skill` |
 | [科技风网站与落地页设计](skills/build-bright-tech-landing-page/SKILL.md) | 明亮科技风网站、响应式落地页、配图与交互设计规范 | `build-bright-tech-landing-page` |
 
-合集版本：**1.3.0**。三个论文技能保持 **1.2.1**，小红书 **3.2.1**，公众号 **1.1.2**，网站 **1.0.1**；技能独立版本以各自 `SKILL.md` 为准，目录与打包入口由 [catalog.json](catalog.json) 管理。保留既有 Slug，避免打断调用和交接。
+合集版本：**1.4.0**。三个论文技能保持 **1.2.1**，小红书 **3.2.1**，公众号 **1.1.2**，网站 **1.1.0**；技能独立版本以各自 `SKILL.md` 为准，目录与打包入口由 [catalog.json](catalog.json) 管理。保留既有 Slug，避免打断调用和交接。
+
+网站技能 1.1.0 新增中文任务入口、可覆盖的视觉建议、[独立 HTML 示例](skills/build-bright-tech-landing-page/examples/landing-page.html)、只读静态检查器与浏览器回归入口。参考 [示例说明](skills/build-bright-tech-landing-page/references/examples.md)，不要将示例作为固定整页模板。
 
 ## 安装
 

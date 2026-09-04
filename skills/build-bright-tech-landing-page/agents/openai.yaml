@@ -1,4 +1,4 @@
 interface:
   display_name: "科技风网站与落地页设计"
   short_description: "设计明亮科技风网站与响应式落地页，重视内容层级、配图和交互体验"
-  default_prompt: "Use $build-bright-tech-landing-page to design and implement a polished responsive landing page from my content."
+  default_prompt: "请使用 $build-bright-tech-landing-page 按我的内容和现有品牌设计或优化响应式页面，并说明已通过、失败和未验证的检查项。"
