@@ -1,9 +1,9 @@
 {
-  "bundle_version": "1.5.0",
+  "bundle_version": "1.6.0",
   "skills": [
     {"name": "tianshu-tanjie-paper-search", "display_name": "arXiv 论文检索与筛选", "category": "research", "tests": "scripts"},
     {"name": "tianshu-tanjie-arxiv", "display_name": "arXiv 论文下载", "category": "research", "tests": "scripts"},
-    {"name": "tianshu-tanjie-paper-reading", "display_name": "论文精读与解析", "category": "research"},
+    {"name": "tianshu-tanjie-paper-reading", "display_name": "论文精读与解析", "category": "research", "tests": "tests"},
     {"name": "xiaohongshu-illustrated-post", "display_name": "小红书图文创作", "category": "writing", "tests": "tests"},
     {"name": "wechat-article-skill", "display_name": "微信公众号智能创作与排版", "category": "writing", "tests": "tests"},
     {"name": "paper-wechat-article", "display_name": "论文解读公众号写作", "category": "writing", "tests": "tests"},

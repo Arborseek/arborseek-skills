@@ -16,9 +16,13 @@
 | [论文解读公众号写作](skills/paper-wechat-article/SKILL.md) | 承接解析笔记，优先论文原图，不足时补示意图，输出有证据的公众号文章 | `paper-wechat-article` |
 | [科技风网站与落地页设计](skills/build-bright-tech-landing-page/SKILL.md) | 明亮科技风网站、响应式落地页、配图与交互设计规范 | `build-bright-tech-landing-page` |
 
-合集版本：**1.5.0**。检索/下载 **1.2.1**，解析 **1.2.2**，论文公众号 **1.0.0**，小红书 **3.2.1**，通用公众号 **1.1.2**，网站 **1.1.0**；技能独立版本以各自 `SKILL.md` 为准，目录与打包入口由 [catalog.json](catalog.json) 管理。保留既有 Slug，避免打断调用和交接。
+合集版本：**1.6.0**。检索/下载/解析 **1.3.0**，论文公众号 **1.1.0**，小红书 **3.2.1**，通用公众号 **1.1.2**，网站 **1.1.0**；技能独立版本以各自 `SKILL.md` 为准，目录与打包入口由 [catalog.json](catalog.json) 管理。保留既有 Slug，避免打断调用和交接。
 
 论文工作流现在可衔接为：检索 → 下载 → 精读解析 → 论文解读公众号写作。新技能独立携带公众号排版引擎；原通用公众号技能不变。先用同版本论文原图，无合适原图时才补充标明来源的重绘/AI 概念图，不合成实验证据。
+
+四个论文技能也都可独立使用：给主题只检索，给 ID 只下载，给 PDF 直接解析或写公众号。整篇解析用过的原图会保存到论文资料目录的 figures/ 并登记版本、页码、图注和哈希；写作优先复用，不重复抓取。详见 [四技能契约](skills/tianshu-tanjie-paper-reading/references/pipeline-contract.md) 与 [原图保存工具](skills/tianshu-tanjie-paper-reading/references/figure-storage.md)。跨设备请整体移动资料目录，不只复制索引。
+
+只需要论文流程时，打包命令还会生成中文名“论文四技能-通用”和“论文四技能-WorkBuddy”两个合集，后者解压后分别上传四个内层 ZIP。使用与实测范围见 [四技能使用说明](docs/paper-workflow.md)。
 
 网站技能 1.1.0 新增中文任务入口、可覆盖的视觉建议、[独立 HTML 示例](skills/build-bright-tech-landing-page/examples/landing-page.html)、只读静态检查器与浏览器回归入口。参考 [示例说明](skills/build-bright-tech-landing-page/references/examples.md)，不要将示例作为固定整页模板。
 
@@ -52,10 +56,10 @@
 | 技能 | 运行依赖 |
 | --- | --- |
 | 论文检索 / 下载 | Python 3.9+ 标准库；联网任务需要 arXiv 官方 HTTPS 访问权限，无 API 密钥要求 |
-| 论文解析 | 宿主正文/图片读取能力；不内置 PDF/OCR 引擎 |
+| 论文解析 | 宿主正文/图片读取能力；资料校验/图片导入只需 Python 3.9+ 标准库；自动页面裁剪需已安装 pdftoppm，无内置 OCR |
 | 小红书图文 | Python 3.9+；排字/图片检查需 Pillow、可用中文字体；实际底图需宿主图像生成工具 |
 | 微信公众号 | Python 3.9+ 与 Beautiful Soup；完整视觉验收需浏览器预览 |
-| 论文公众号 | Python 3.9+ 与 Beautiful Soup；论文取图/视觉核对依赖宿主 PDF 和图片能力，补图按需使用原生生成工具 |
+| 论文公众号 | Python 3.9+ 与 Beautiful Soup；自带与解析相同的取图工具，可调用已有 pdftoppm 或导入宿主导出的图片；补图按需使用原生生成工具 |
 | 网站设计 | 当前项目已有框架与工具链；视觉验收需浏览器，不绑定指定框架 |
 
 依赖按各技能的 `requirements.txt` 安装到获准的环境；打包不自动安装依赖、不上传内容、不创建定时任务或部署网站。

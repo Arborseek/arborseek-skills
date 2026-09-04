@@ -30,12 +30,13 @@ def materialize_asset(item: dict, package_dir: Path, output_dir: Path) -> str:
     return str(item.get("source_url") or "")
 
 
-def insert_visuals(fragment: str, items: list[dict], package_dir: Path, output_dir: Path) -> tuple[str, str, list[str]]:
+def insert_visuals(fragment: str, items: list[dict], package_dir: Path, output_dir: Path, include_candidates: bool = False) -> tuple[str, str, list[str]]:
     soup = BeautifulSoup(fragment, "html.parser")
     cover_url = ""
     inserted = []
     for item in items:
-        if item.get("status") != "ready":
+        candidate = include_candidates and item.get("status") == "candidate"
+        if item.get("status") != "ready" and not candidate:
             continue
         src = materialize_asset(item, package_dir, output_dir)
         if not src:
@@ -44,6 +45,8 @@ def insert_visuals(fragment: str, items: list[dict], package_dir: Path, output_d
         image = soup.new_tag("img", attrs={"src": src, "alt": str(item.get("alt") or "文章配图")})
         figure.append(image)
         caption_text = str(item.get("caption") or item.get("credit") or "").strip()
+        if candidate:
+            caption_text = "【草稿素材：图像/使用权限待确认，不可直接发布】" + caption_text
         if caption_text:
             caption = soup.new_tag("figcaption", attrs={"class": "caption"})
             caption.string = caption_text
@@ -79,7 +82,10 @@ def main() -> None:
     parser.add_argument("output", type=Path)
     parser.add_argument("--fragment-output", type=Path)
     parser.add_argument("--require-ready", action="store_true")
+    parser.add_argument("--include-candidates", action="store_true")
     args = parser.parse_args()
+    if args.require_ready and args.include_candidates:
+        parser.error("Candidate images cannot be included in a final render")
 
     data = json.loads(args.package.read_text(encoding="utf-8"))
     validation = validate_package(data, args.package.parent, args.require_ready)
@@ -95,7 +101,7 @@ def main() -> None:
     theme = engine.select_theme(title, source, seed) if chosen == "auto" else chosen
     args.output.parent.mkdir(parents=True, exist_ok=True)
     fragment, preservation = engine.sanitize(source, title, args.package.parent, args.output.parent)
-    fragment, cover_url, inserted = insert_visuals(fragment, data.get("visuals", {}).get("items", []), args.package.parent, args.output.parent)
+    fragment, cover_url, inserted = insert_visuals(fragment, data.get("visuals", {}).get("items", []), args.package.parent, args.output.parent, args.include_candidates)
     metadata = article.get("metadata") or {}
     meta = " · ".join(str(metadata.get(key) or "").strip() for key in ("source_label", "author", "date") if str(metadata.get(key) or "").strip())
     args.output.write_text(engine.document(title, fragment, theme, meta, cover_url), encoding="utf-8")

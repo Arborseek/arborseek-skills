@@ -48,6 +48,11 @@ def _is_web_url(value: str) -> bool:
     return parsed.scheme in {"http", "https"} and bool(parsed.netloc)
 
 
+def _is_source_reference(value: str) -> bool:
+    # Private/local papers have a content identity, not an invented public URL.
+    return _is_web_url(value) or bool(re.fullmatch(r"urn:sha256:[a-f0-9]{64}", value))
+
+
 def _path_exists(value: str, base_dir: Path | None) -> bool:
     if not value:
         return False
@@ -100,8 +105,8 @@ def validate_package(data: dict, base_dir: Path | None = None, require_ready: bo
             errors.append(f"research.sources[{index}] must be an object")
             continue
         url = str(source.get("url") or "")
-        if not _is_web_url(url):
-            errors.append(f"research.sources[{index}].url must be an http(s) URL")
+        if not _is_source_reference(url):
+            errors.append(f"research.sources[{index}].url must be http(s) or a local paper SHA-256 URN")
         else:
             source_urls.add(url)
         for key in ("title", "publisher"):

@@ -102,6 +102,17 @@ class PaperBridgeTests(unittest.TestCase):
         self.assertIn("合成测试图片", fragment)
         self.assertEqual(inserted, ["f1"])
 
+    def test_candidate_draft_is_visible_without_changing_approval(self):
+        from render_article_package import insert_visuals
+        data = self.original()
+        before = copy.deepcopy(data)
+        fragment, _, inserted = insert_visuals(self.draft, data["visuals"]["items"], self.base,
+                                                self.base / "draft-preview", include_candidates=True)
+        self.assertIn("不可直接发布", fragment)
+        self.assertEqual(inserted, ["f1"])
+        self.assertEqual(data, before)
+        self.assertFalse(bridge.check(data, self.base, True)["valid"])
+
     def test_embedded_untracked_image_is_rejected(self):
         data = self.package()
         data["article"]["content_html"] += '<img src="secret.png">'

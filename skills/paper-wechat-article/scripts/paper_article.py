@@ -4,6 +4,8 @@ from __future__ import annotations
 import argparse
 import copy
 import json
+import os
+import re
 import subprocess
 import sys
 from pathlib import Path
@@ -11,6 +13,7 @@ from urllib.parse import urlparse
 
 from bs4 import BeautifulSoup
 from article_package import package_template, validate_package
+from paper_workspace import SCHEMA as WORKSPACE_SCHEMA, sha256, validate as validate_workspace
 
 LABELS = {"original": "论文原图", "redraw": "依据原文重绘示意", "generated": "AI 生成概念配图，非论文原图"}
 SCOPES = {"full-text", "partial", "abstract", "notes-only"}
@@ -26,8 +29,11 @@ def paper_errors(paper):
     errors = ["paper." + key + " is required" for key in ("title", "version", "source_url")
               if not nonempty(paper.get(key))]
     url = urlparse(str(paper.get("source_url", "")))
-    if url.scheme not in {"https", "http"} or not url.netloc:
-        errors.append("paper.source_url must be an official http(s) page, not an invented URL")
+    local = re.fullmatch(r"urn:sha256:[a-f0-9]{64}", str(paper.get("source_url", "")))
+    if not local and (url.scheme not in {"https", "http"} or not url.netloc):
+        errors.append("paper.source_url must be http(s) or a local paper SHA-256 URN; never invent a URL")
+    if local and paper.get("source_url") != "urn:sha256:" + str(paper.get("sha256", "")):
+        errors.append("Local source identity does not match paper.sha256")
     if paper.get("read_scope") not in SCOPES:
         errors.append("paper.read_scope is invalid")
     return errors
@@ -36,6 +42,8 @@ def paper_errors(paper):
 def prepare(handoff, draft, title, base):
     if not isinstance(handoff, dict):
         raise ValueError("handoff must be an object")
+    if handoff.get("schema_version") == WORKSPACE_SCHEMA:
+        validate_workspace(handoff, base)
     paper = handoff.get("paper")
     errors = paper_errors(paper)
     if errors:
@@ -44,8 +52,12 @@ def prepare(handoff, draft, title, base):
                             tone="accessible", visual_theme="cyan-research", research_mode="standard",
                             image_policy="none")
     data["paper"] = copy.deepcopy(paper)
+    if paper.get("local_pdf"):
+        data["paper"]["local_pdf"] = str((base / paper["local_pdf"]).resolve())
+    authors = paper.get("authors")
+    credit = ", ".join(map(str, authors)) if isinstance(authors, list) else str(authors or "论文原文")
     data["research"]["sources"] = [{"url": paper["source_url"], "title": paper["title"],
-                                    "publisher": str(paper.get("authors") or "论文原文")}]
+                                    "publisher": credit or "论文原文"}]
     claims = handoff.get("claims", [])
     figures = handoff.get("figures", [])
     if not isinstance(claims, list) or not isinstance(figures, list):
@@ -98,6 +110,13 @@ def check(data, base, ready=False):
         paper = {}
     if paper.get("read_scope") != "full-text":
         report["warnings"].append("Limited reading scope: disclose it in the article; do not claim full-text review")
+    if str(paper.get("source_url", "")).startswith("urn:"):
+        report["warnings"].append("Local/private paper: no public source URL; disclose provenance and publication permission")
+    if paper.get("sha256"):
+        pdf_path = paper.get("local_pdf")
+        pdf = (base / pdf_path).resolve() if isinstance(pdf_path, str) and pdf_path else None
+        if not pdf or not pdf.is_file() or sha256(pdf) != paper["sha256"]:
+            errors.append("Paper PDF is missing or changed; restore matching source before continuing")
     article = data.get("article", {})
     if not isinstance(article, dict):
         article = {}
@@ -133,6 +152,13 @@ def check(data, base, ready=False):
         if kind not in LABELS:
             errors.append(prefix + "missing paper_figure.kind")
             continue
+        if kind == "original" and figure.get("paper_sha256"):
+            if figure["paper_sha256"] != paper.get("sha256") or figure.get("paper_version") != paper.get("version"):
+                errors.append(prefix + "figure provenance disagrees with this paper/version")
+            asset_path = item.get("local_path")
+            asset = (base / asset_path).resolve() if isinstance(asset_path, str) and asset_path else None
+            if not asset or not asset.is_file() or sha256(asset) != figure.get("sha256"):
+                errors.append(prefix + "saved original figure missing or modified; do not silently regenerate")
         expected = {"original": "provided", "redraw": "diagram", "generated": "generated"}[kind]
         if item.get("source_type") != expected:
             errors.append(prefix + "source_type disagrees with paper_figure.kind")
@@ -184,13 +210,20 @@ def main():
         sub.add_argument("--require-ready", action="store_true")
         if command == "render":
             sub.add_argument("output", type=Path)
+            sub.add_argument("--draft-images", action="store_true", help="Show candidate images with a visible draft warning, without approving them")
     args = parser.parse_args()
+    if getattr(args, "draft_images", False) and args.require_ready:
+        parser.error("--draft-images cannot be combined with --require-ready")
     try:
         if hasattr(args, "output") and args.output.exists():
             raise FileExistsError("Output already exists; choose a new path: " + str(args.output))
         if args.command == "prepare":
             data = prepare(json.loads(args.handoff.read_text(encoding="utf-8")),
                            args.draft.read_text(encoding="utf-8"), args.title, args.handoff.parent)
+            # Keep the article package portable when the complete workspace moves.
+            for container, key in [(data["paper"], "local_pdf")] + [(item, "local_path") for item in data["visuals"]["items"]]:
+                if container.get(key):
+                    container[key] = os.path.relpath(container[key], args.output.parent.resolve()).replace(os.sep, "/")
             report = check(data, args.output.parent)
             if report["valid"]:
                 args.output.parent.mkdir(parents=True, exist_ok=True)
@@ -204,6 +237,8 @@ def main():
                        str(args.package), str(args.output)]
                 if args.require_ready:
                     cmd.append("--require-ready")
+                if args.draft_images:
+                    cmd.append("--include-candidates")
                 subprocess.run(cmd, check=True)
         print(json.dumps(report, ensure_ascii=False, indent=2))
         return 0 if report["valid"] else 1

@@ -38,6 +38,11 @@ def metadata(root):
 def validate():
     if len(set(NAMES)) != len(NAMES):
         raise ValueError('Duplicate catalog entry')
+    reader = ROOT / 'skills/tianshu-tanjie-paper-reading'
+    writer = ROOT / 'skills/paper-wechat-article'
+    for relative in ('scripts/paper_workspace.py', 'tests/test_workspace.py'):
+        if (reader / relative).read_bytes() != (writer / relative).read_bytes():
+            raise ValueError('Standalone workspace copies diverged: ' + relative)
     actual = {p.name for p in (ROOT / 'skills').iterdir() if p.is_dir()}
     if actual != set(NAMES):
         raise ValueError('Skill directories and catalog differ')
@@ -68,6 +73,7 @@ def validate():
 
 def main():
     print('Validating collection ' + validate(), flush=True)
+    subprocess.run([sys.executable, '-m', 'unittest', 'discover', '-s', str(ROOT / 'tests'), '-p', 'test_*.py'], check=True)
     for item in CATALOG['skills']:
         if 'tests' not in item:
             continue

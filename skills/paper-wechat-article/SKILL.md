@@ -2,7 +2,7 @@
 name: paper-wechat-article
 description: 将论文解析笔记与原文转成中文公众号文章，优先提取论文原图，不足时补充标注清楚的示意图，并输出 HTML。
 metadata:
-  version: "1.0.0"
+  version: "1.1.0"
 ---
 
 # 论文解读公众号写作
@@ -13,9 +13,12 @@ metadata:
 
 ## 接住上一步
 
+首次串联先读 [四技能资料契约](references/pipeline-contract.md)。只有本技能也能从 PDF 开始：用自带的 [资料目录与取图工具](references/figure-storage.md) 核对、保存原文和必要图表，再完成所需阅读与写作，不要求重装/重跑前三个技能。没有公开链接的本地论文可以使用真实 PDF 哈希身份，不能编造网址。
+
 - 用户说“解析完了，写成公众号”时，先找本轮或用户指定任务目录中的解析笔记、论文 PDF/官方正文、版本元数据与已提取图片；不要再次问用户贴一遍已经提供的材料，不遍历无关私人目录。
 - 已有 Markdown 笔记也能接收；由助手按 [交接约定](references/handoff.md) 整理，不要求用户手工填写 JSON。结构化交接只是内部工具输入，不是使用门槛。
 - 核对笔记与原文的标题、版本和关键页码。只补读支撑文章所需的段落、结果和图注；版本不一致先对齐，不合并不同版本的指标。
+- 已有 paper-workspace.json 可直接作为 prepare 输入；先校验并复用 figures/，不因换成公众号输出而重新取图。索引中图片丢失或被修改时明确报错，恢复同源文件或重新核验，不以 AI 图掩盖缺失。旧版 paper-handoff.json 继续兼容。
 - 仅有笔记、摘要或无法打开原文时，可以写明确标注范围的草稿；未核验事实不升级为已验证，不虚构图表或宣称完成全文解读。缺少原文时指出需要哪份材料。
 
 ## 写成文章
@@ -37,13 +40,15 @@ metadata:
 ```bash
 python3 scripts/paper_article.py prepare paper-handoff.json draft.html article.json --title "文章标题"
 python3 scripts/paper_article.py check article.json
-python3 scripts/paper_article.py render article.json preview.html
+python3 scripts/paper_article.py render article.json preview.html --draft-images
 # 人工核对文章、来源、图片并更新 article.json 后，才使用最终门槛：
 python3 scripts/paper_article.py render article.json final.html --require-ready
 python3 scripts/lint_article_output.py final.html
 ```
 
 上述路径是用法示例，执行时换成用户任务中的文件。`prepare` 不生成文章、不下载图片、不把笔记自动认证成事实，也不覆盖已有输出。`render` 复用公众号引擎；不要绕过 `paper_article.py` 的证据检查直接调用底层渲染器。
+
+`--draft-images` 仅用于内部预览，显示候选原图与“待核验/权限待确认”警示，不更改审核状态；不能与 --require-ready 合用。新文章包采用相对路径，整个资料目录一起移动即可继续使用，不单独发送缺少原图的 JSON。
 
 桌面及约 390px 手机宽度实际预览：图中文字清晰、比例完整、图注与来源可见，无横向溢出。复杂图可以追加放大局部，并保留完整图及关联图号。没有浏览器能力就标记“视觉未验收”，不能写“可直接发布”。
 

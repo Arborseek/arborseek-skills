@@ -280,6 +280,18 @@ def download(client, requested, directory, kind, max_bytes):
     return client.fetch(url, lambda response: save_response(response, directory, meta, kind, url, max_bytes))
 
 
+def selected_from_search(path, inputs):
+    """Validate explicit choices without expanding them or making a request."""
+    data = json.loads(Path(path).read_text(encoding="utf-8"))
+    if not isinstance(data, dict) or not isinstance(data.get("papers"), list):
+        raise ValueError("检索交接必须包含 papers 数组")
+    available = {paper.get("id") for paper in data["papers"] if isinstance(paper, dict) and isinstance(paper.get("id"), str)}
+    chosen = [arxiv_id(value) for value in inputs]
+    if not chosen or any(not re.search(r"v\d+$", value) or value not in available for value in chosen):
+        raise ValueError("只允许下载检索结果中明确选定的带版本 ID；不会默认下载全部或替换版本")
+    return chosen
+
+
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("inputs", nargs="*")
@@ -291,6 +303,7 @@ def main(argv=None):
     parser.add_argument("--sort", choices=("relevance", "submittedDate", "lastUpdatedDate"), default="relevance")
     parser.add_argument("--output-dir", type=Path, default=Path("outputs/papers"))
     parser.add_argument("--source", action="store_true")
+    parser.add_argument("--from-search", type=Path, help="核对显式选择的 ID 属于此检索 JSON，不自动选文")
     parser.add_argument("--max-mb", type=int, default=100)
     args = parser.parse_args(argv)
     searching = args.search is not None or args.query is not None
@@ -300,6 +313,13 @@ def main(argv=None):
         parser.error("搜索不能与下载输入或 --source 同时使用")
     if not searching and not 1 <= len(args.inputs) <= 20:
         parser.error("请提供 1–20 个 ID/URL，或使用 --search/--query")
+    if args.from_search:
+        if searching:
+            parser.error("--from-search 仅用于下载")
+        try:
+            args.inputs = selected_from_search(args.from_search, args.inputs)
+        except (OSError, ValueError, TypeError) as exc:
+            parser.error(str(exc))
     client = Client()
     if searching:
         query = args.query

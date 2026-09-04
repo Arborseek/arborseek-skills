@@ -45,6 +45,9 @@ def main():
     version = validate()
     args.output_dir.mkdir(parents=True, exist_ok=True)
     suite = {}
+    paper_names = {'tianshu-tanjie-paper-search', 'tianshu-tanjie-arxiv',
+                   'tianshu-tanjie-paper-reading', 'paper-wechat-article'}
+    paper_suite, paper_workbuddy = {}, {}
     for name in NAMES:
         root = ROOT / 'skills' / name
         skill_version = metadata(root)['version']
@@ -63,11 +66,18 @@ def main():
         direct['SKILL.md'] = ('---\n' + header + '\nuser-invocable: true\n---\n'
                               + text[end + 5:]).encode('utf-8')
         archive(args.output_dir / (name + '-' + skill_version + '-workbuddy.zip'), direct)
+        if name in paper_names:
+            paper_suite.update(entries)
+            paper_workbuddy[item['display_name'] + '-' + skill_version + '-WorkBuddy.zip'] = args.output_dir / (name + '-' + skill_version + '-workbuddy.zip')
         suite.update({'skills/' + relative: source for relative, source in entries.items()})
     for relative in ('README.md', 'CHANGELOG.md', 'catalog.json', 'docs/installation.md',
-                     'scripts/check.py', 'scripts/package.py'):
+                     'scripts/check.py', 'scripts/package.py', 'tests/test_paper_pipeline.py', 'docs/paper-workflow.md'):
         suite[relative] = ROOT / relative
     archive(args.output_dir / ('arborseek-skills-' + version + '.zip'), suite)
+    for entries in (paper_suite, paper_workbuddy):
+        entries['使用说明.md'] = ROOT / 'docs/paper-workflow.md'
+    archive(args.output_dir / ('论文四技能-通用-' + version + '.zip'), paper_suite)
+    archive(args.output_dir / ('论文四技能-WorkBuddy-' + version + '.zip'), paper_workbuddy)
 
 
 if __name__ == '__main__':

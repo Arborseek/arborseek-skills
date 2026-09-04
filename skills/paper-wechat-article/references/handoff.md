@@ -1,12 +1,14 @@
 # 解析 → 公众号交接
 
+1.1.0 起优先直接接收 [资料契约](pipeline-contract.md) 的 paper-workspace.json：prepare 校验原 PDF 和图片哈希/版本，复用实际保存的图片。下列旧版交接仍兼容，不要求用户重做笔记。
+
 直接接收已有笔记和 PDF，无需上游升级。只有在进入脚本排版时，由助手整理以下内部约定；单篇论文一个交接，多篇比较先分别核对证据，不混用 ID 或图号。
 
 可运行的合成结构示例见 [示例 JSON](../examples/paper-handoff.example.json)，其中 example.org、标题与内容只是测试数据，不能用于真实发布。
 
 ## 交接结构 v1
 
-- `paper`：`title`、`version`、`source_url`（官方页面 http/https）、`read_scope`（full-text / partial / abstract / notes-only），可附 `local_pdf`、`authors`。来源无法核实的私有稿件保持草稿，不编造公开网址来通过检查。
+- `paper`：`title`、`version`、`source_url`（官方页面 http/https；本地私有 PDF 可用真实 urn:sha256:哈希并保留 sha256/local_pdf）、`read_scope`（full-text / partial / abstract / notes-only），可附 `local_pdf`、`authors`。来源无法核实的私有稿件如实注明范围，不编造公开网址来通过检查。
 - `claims`：每条有 `id`、`claim`、`status`（verified / inference / unverified）、`locator`（如“PDF 第 6 页，Table 2”）、`notes`。verified 仅表示编辑实际核验过；inference 需要解释推理，不将摘要级材料包装成全文结论。模型不得按字段自动认证。
 - `figures`：每个图位有 `id`、`kind`（original / redraw / generated）、`label`（Fig. 2 等）、`locator`、`local_path`、`alt`、`caption`、`credit`、`rights_status`（cleared / unknown）、`rights_note`、`checked`（是否实际查看核对）、`use_as_evidence`（布尔）。无图时使用空数组。
 - redraw / generated 额外有 `fallback_reason`，写清已检查哪些原图以及为什么不适用；generated 另需 `generation_prompt`。它们只能承担说明作用，不能被声明为原论文实验证据。
@@ -16,6 +18,8 @@
 ## 编辑 article.json
 
 生成后以 article.json 为本次编辑的唯一记录，不再修改旧交接却遗漏文章包：
+
+这指文章编辑记录；上游 paper-workspace.json 仍是原文/原图档案，不用写作润色覆写原阅读证据。升级到另一论文版本时新建资料目录。
 
 - 正文存 `article.content_html`，更改关键结论同步 `research.claims`。原文位置保留在每条 `notes`，文章正文也需给读者图表号/链接。
 - 原论文身份保存在 `paper`。图像原始记录保存在各 `visuals.items[].paper_figure`，文件路径、显示图注和状态在同一 item。
