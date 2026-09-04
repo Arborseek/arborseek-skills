@@ -16,6 +16,7 @@ from urllib.parse import urlparse
 from bs4 import BeautifulSoup
 from article_package import package_template, validate_package
 from paper_workspace import SCHEMA as WORKSPACE_SCHEMA, sha256, validate as validate_workspace
+from formula_assets import validate_formulas
 
 LABELS = {"original": "论文原图", "redraw": "依据原文重绘示意", "generated": "AI 生成概念配图，非论文原图", "project": "项目网站素材，非论文原图"}
 SCOPES = {"full-text", "partial", "abstract", "notes-only"}
@@ -114,6 +115,8 @@ def prepare(handoff, draft, title, base, project_images=None):
                             tone="accessible", visual_theme="cyan-research", research_mode="standard",
                             image_policy="none")
     data["paper"] = copy.deepcopy(paper)
+    if "formulas" in handoff:
+        data["formulas"] = copy.deepcopy(handoff["formulas"])
     if paper.get("local_pdf"):
         data["paper"]["local_pdf"] = str((base / paper["local_pdf"]).resolve())
     authors = paper.get("authors")
@@ -219,6 +222,7 @@ def check(data, base, ready=False):
     if not isinstance(article, dict):
         article = {}
     soup = BeautifulSoup(str(article.get("content_html", "")), "html.parser")
+    errors.extend(validate_formulas(dict(data, article=article), ready))
     if ready:
         public_text = html.unescape(soup.get_text(" ") + " " + str(article.get("title", "")))
         if any(marker in public_text for marker in INTERNAL_MARKERS):

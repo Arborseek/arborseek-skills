@@ -10,6 +10,7 @@ from pathlib import Path
 from urllib.parse import urlparse
 
 from bs4 import BeautifulSoup
+from formula_assets import unresolved_math
 
 
 def lint_html(raw: str) -> dict:
@@ -28,6 +29,8 @@ def lint_html(raw: str) -> dict:
         errors.append("body must have exactly one theme-* class")
     if article is None or not article.get_text(" ", strip=True):
         errors.append("article body is empty")
+    if article and (unresolved_math(str(article)) or article.select("[data-formula-id]")):
+        errors.append("unrendered math or unresolved formula slot remains")
     if soup.find(["script", "iframe", "object", "embed", "form", "input", "button"]):
         errors.append("executable or interactive content remains")
     if "color-scheme: light" not in style_text:

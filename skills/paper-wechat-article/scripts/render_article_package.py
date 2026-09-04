@@ -106,7 +106,20 @@ def main() -> None:
     seed = str(data.get("layout", {}).get("seed") or "wechat-studio-v1")
     theme = engine.select_theme(title, source, seed) if chosen == "auto" else chosen
     args.output.parent.mkdir(parents=True, exist_ok=True)
+    if data.get("formulas"):
+        from formula_assets import materialize_formulas
+        try:
+            source = materialize_formulas(source, data["formulas"], args.output.parent)
+        except ValueError as exc:
+            print(json.dumps({"valid": False, "errors": [str(exc)]}, ensure_ascii=False))
+            raise SystemExit(1)
     fragment, preservation = engine.sanitize(source, title, args.package.parent, args.output.parent)
+    if data.get("formulas"):
+        formula_soup = BeautifulSoup(fragment, "html.parser")
+        for img in formula_soup.select("img[width]"):
+            width = int(img["width"])
+            img["style"] = f"display:block;width:{width}px;max-width:100%;height:auto;margin:16px auto;"
+        fragment = str(formula_soup)
     fragment, cover_url, inserted = insert_visuals(fragment, data.get("visuals", {}).get("items", []), args.package.parent, args.output.parent, args.include_candidates)
     if "paper" in data:
         used = [item for item in data.get("visuals", {}).get("items", []) if str(item.get("id")) in inserted]
