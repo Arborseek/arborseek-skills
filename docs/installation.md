@@ -1,6 +1,6 @@
 # 安装与兼容指南
 
-十个技能独立打包，均以 `SKILL.md` 为入口；`agents/openai.yaml` 是 Codex 的可选展示信息，其他平台的核心运行不依赖它。统一从 Arborseek/arborseek-skills 获取更新，公众号旧仓库只保留历史。
+十一个技能独立打包，均以 `SKILL.md` 为入口；`agents/openai.yaml` 是 Codex 的可选展示信息，其他平台的核心运行不依赖它。统一从 Arborseek/arborseek-skills 获取更新，公众号旧仓库只保留历史。
 
 普通独立 ZIP 包含一个技能文件夹；`-workbuddy.zip` 的根目录直接放 `SKILL.md` 与资源，并补充平台展示字段。合集 ZIP 用于整体下载和维护，不作为单个技能导入。
 
@@ -48,7 +48,7 @@ Slug 与技能 `name` 相同，展示名称不带品牌前缀。简介可直接�
 - 定时任务只在用户明确要求且宿主原生调度工具可用时配置；安装不会自动创建定时任务。
 - 多个客户端共享同一服务端限流，arXiv 请求仍须串行，不能并发调用以规避限制。
 
-论文运行路由见各自 `references/platform-compatibility.md`；其余技能见各自 `references/runtime.md`。不要求使用所有十个技能，只安装需要的完整目录即可。检索/下载 1.3.1、解析 1.4.0 与论文公众号 1.2.0 共享 paper-workspace/1 交接约定，也接受旧版 Markdown 笔记、PDF 与下载元数据。解析和论文公众号各自携带独立的资料/取图/网站归档脚本，只有其中一个也可运行。
+论文运行路由见各自 `references/platform-compatibility.md`；其余技能见各自 `references/runtime.md`。不要求使用所有十一个技能，只安装需要的完整目录即可。检索/下载 1.3.1、解析 1.4.0 与论文公众号 1.2.0 共享 paper-workspace/1 交接约定，也接受旧版 Markdown 笔记、PDF 与下载元数据。解析和论文公众号各自携带独立的资料/取图/网站归档脚本，只有其中一个也可运行。
 
 录屏教程另需本地 FFmpeg/ffprobe、Pillow，Word 导出需 python-docx。抽帧脚本不含语义识别、OCR 或 ASR；需要宿主实际查看画面后编写步骤。不自动安装软件、上传录屏或记录桌面。只有 public/ 是对外交付目录，原视频、提取帧和内部核对单不自动外发。
 

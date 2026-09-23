@@ -1,0 +1,4 @@
+interface:
+  display_name: "知乎专业写作"
+  short_description: "帮助拟定知乎问题、回答、文章和想法，检查证据、逻辑与表达边界"
+  default_prompt: "使用 $zhihu-pro-writing 帮我把这个主题写成专业、自然、有依据的知乎内容。"
