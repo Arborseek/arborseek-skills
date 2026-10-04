@@ -1,0 +1,4 @@
+interface:
+  display_name: "中文资讯写作"
+  short_description: "从新闻链接和素材写出事实清楚、来源可查、表达自然的中文资讯文章"
+  default_prompt: "请用 $chinese-news-writer 根据这些素材写一篇中文资讯文章，核对日期和关键事实，并附来源链接。"

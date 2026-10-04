@@ -1,0 +1,4 @@
+interface:
+  display_name: "中文去 AI 味"
+  short_description: "清理中文稿件的模板感、翻译腔和空泛表达，保留事实、语气与信息密度"
+  default_prompt: "请用 $chinese-humanizer 给这篇中文稿去 AI 味，保留事实、数字、来源和限定条件，直接给改写稿。"
